@@ -1,0 +1,25 @@
+## EDITORS
+*~
+*.bak
+*.swp
+*.tmp
+*.log
+
+## WINDOWS
+Thumbs.db
+Desktop.ini
+
+## MAC
+.DS_Store
+
+## C
+*.o
+
+## Flex / Bison
+*.output
+lex.yy.c
+*.tab.c
+*.tab.h
+
+## Programs
+mini-pascal-compiler
