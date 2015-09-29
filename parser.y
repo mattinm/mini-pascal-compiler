@@ -2,6 +2,8 @@
 #include "compiler.h"
 #include <stdio.h>
 
+extern int yylex(void);
+
 void yyerror (const char *s) {
 	fprintf(stderr, "%s\n", s);
 }
@@ -20,7 +22,7 @@ void yyerror (const char *s) {
 %start program
 %token LPAREN RPAREN LBRACK RBRACK /* ( | ) | [ | ] */
 %token DOT COMMA SEMICOLON COLON /* . | , | ; | : */
-%token ASSIGNOP /* := */
+%token ASSIGNOP LT GT LTE GTE NEQ EQ /* := | < | > | <= | >= | <> | = */
 %token PROGRAM PROCEDURE FUNCTION /* program | procedure | function */
 %token BEGINS END /* begin | end */
 %token DO WHILE /* do | while */
@@ -29,7 +31,6 @@ void yyerror (const char *s) {
 %token VAR ARRAY /* var | ARRAY */
 %token READ READLN WRITE WRITELN /* read | readln | write | writeln */
 %token <chval> ADDOP MULOP /* + - | * / m d */
-%token <string> RELOP /* < > <= >= <> = */
 %token <ival> INTEGER INTNO /* integer */
 %token <rval> REAL REALNO /* real */
 %token <id> ID /* id */

@@ -1,11 +1,19 @@
 PROJNAME = mini-pascal-compiler
 CC = gcc
-CFLAGS = -lfl
+CFLAGS = 
 OBJ = $(PROJNAME).tab.o lex.yy.o
 LEX = scanner.l
 PARSE = parser.y
 PARSEFLAGS = -v -d
 REMOVEFILES = parser.tab.* lex.yy.* $(PROJNAME) *.s *.output *.o
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	CFLAGS += -lfl
+endif
+ifeq ($(UNAME_S),Darwin)
+	CFLAGS += -ll
+endif
 
 all: $(PROJNAME)
 

@@ -1,9 +1,10 @@
 #include "compiler.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <ctype.h>
 
 extern FILE *yyin;
+extern int yylex(void);
 
 void usage(const char *progname) {
 	printf("Usage: %s filename\n  filename\tPascal file to compile\n", progname);
@@ -44,7 +45,7 @@ int token;
 
 	/** just run the lexer for now, skipping the scanner */
 	while ((token = yylex())) {
-		printf("%d\n", token);
+		//printf("%d\n", token);
 	}
 
 	return EXIT_SUCCESS;
