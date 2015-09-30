@@ -1,29 +1,43 @@
 PROJNAME = mini-pascal-compiler
+YYNAME = yy-mini-pascal-compiler
 CC = gcc
 CFLAGS = 
-OBJ = $(PROJNAME).tab.o lex.yy.o
+YYCFLAGS = -DYYCOMPILE
+YYOBJ = $(YYNAME).tab.o lex.yy.o
 LEX = scanner.l
 PARSE = parser.y
 PARSEFLAGS = -v -d
 REMOVEFILES = parser.tab.* lex.yy.* $(PROJNAME) *.s *.output *.o
+SOURCES = compiler.c io.c scanner.c tokens.c
+YYSOURCES = compiler.c parser.tab.c lex.yy.c
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
-	CFLAGS += -lfl
+	YYCFLAGS += -lfl
 endif
 ifeq ($(UNAME_S),Darwin)
-	CFLAGS += -ll
+	YYCFLAGS += -ll
 endif
 
-all: $(PROJNAME)
+hand: $(PROJNAME)
+
+yy: $(YYNAME)
+
+all: $(PROJNAME) $(YYNAME)
 
 debug: CFLAGS += -DDEBUG
 debug: $(PROJNAME)
 
-$(PROJNAME): $(OBJ)
-	$(CC) compiler.c parser.tab.c lex.yy.c $(CFLAGS) -o $@
+debugyy: YYCFLAGS += -DDEBUG
+debugyy: $(YYNAME)
 
-$(PROJNAME).tab.o: $(PARSE)
+$(PROJNAME):
+	$(CC) $(SOURCES) $(CFLAGS) -o $@
+
+$(YYNAME): $(YYOBJ)
+	$(CC) $(YYSOURCES) $(CFLAGS) -o $@
+
+$(YYNAME).tab.o: $(PARSE)
 	bison $(PARSEFLAGS) $(PARSE)
 
 lex.yy.o: $(LEX)
