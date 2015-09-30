@@ -10,6 +10,7 @@
 #define LINE_BUFF		2048
 
 int pcscanerrors = 0;
+int pcscanwarnings = 0;
 
 char line[LINE_BUFF];
 char *lineptr = line;
@@ -95,7 +96,7 @@ void
 pcresetline() {
 	/* print the line */
 	*lineptr = '\0';
-	printf("[%d] %s\n", pclineno++, line);
+	printf("[%d] %s\n", pclineno, line);
 
 	/* reset the lineptr and size */
 	lineptr = line;
@@ -107,10 +108,22 @@ Skips whitespace.
 */
 void
 pcskipwhitespace(char *cur, char *next, FILE *fp) {
+	int dontprint = 0;
 	while (isspace(*cur)) {
 		/* see if we have a new line */
 		if (*cur == '\n') {
-			pcresetline();
+			/* don't print multiple blank lines */
+			if (!dontprint) {
+				pcresetline();
+				dontprint = 1;
+			} else {
+				lineptr = line;
+				linesize = 0;
+				*lineptr = '\0';
+			}
+
+			/* increment our line counter */
+			++pclineno;
 		}
 
 		pcgetnextc(cur, next, fp);
@@ -148,6 +161,7 @@ pcgetkeyword(char *b, pcsym *sym) {
 	else if (strcmp("array", b) == 0) *sym = arraysym;
 	else if (strcmp("of", b) == 0) *sym = ofsym;
 	else if (strcmp("char", b) == 0) *sym = charsym;
+	else if (strcmp("string", b) == 0) *sym = stringsym;
 	else if (strcmp("integer", b) == 0) *sym = integersym;
 	else if (strcmp("real", b) == 0) *sym = realsym;
 	else if (strcmp("var", b) == 0) *sym = varsym;
@@ -335,6 +349,52 @@ pcgettoken(FILE *fp) {
 			val.ival = atoi(buf);
 			sym = integernosym;
 		}
+	}
+
+	/* now check for strings and characters */
+	else if (cur == '\'') {
+		int scount = 0;
+
+		/* add values to the buffer until we hit a \n or ' or EOF */
+		while (next != '\n' && next != '\'' && next != EOF) {
+			pcgetnextc(&cur, &next, fp);
+			*b++ = cur;
+			++scount;
+		}
+
+		/* if we hit a new line or EOF, then we have an ill-formed string */
+		if (next == '\n' || next == EOF) {
+			/* print the error */
+			*b = '\0';
+			pcerror("{%d} ERR: No closing ': %s\n", pclineno, buf);
+			++pcscanerrors;
+
+			/* go to the next token */
+			if (next == EOF) return NULL;
+			pcungetc(next, fp);
+			return pcgettoken(fp);
+		}
+
+		/* warn about empty strings */
+		*b = '\0';
+		if (!scount) {
+			pcerror("{%d} WARN: Empty string/character found.\n", pclineno);
+			++pcscanwarnings;
+		}
+
+		/* prepare our character if 1 value */
+		if (scount == 1) {
+			sym = charvalsym;
+			val.cval = *buf;
+		}
+		/* otherwise, it's a string */
+		else {
+			sym = stringvalsym;
+			val.str = strdup(buf);
+		}
+
+		/* we consume another from the stream, so the tick doesn't go back in */
+		pcgetnextc(&cur, &next, fp);
 	}
 
 	/* now check for keywords and id's */

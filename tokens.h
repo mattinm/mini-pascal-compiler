@@ -72,6 +72,7 @@ typedef enum {
 	arraysym,
 	ofsym,
 	charsym,
+	stringsym,
 	integersym,
 	realsym,
 	varsym,
@@ -79,7 +80,8 @@ typedef enum {
 	/* Constants */
 	integernosym,
 	realnosym,
-	stringsym,
+	stringvalsym,
+	charvalsym,
 
 	/* Built-in functions */
 	chrsym,

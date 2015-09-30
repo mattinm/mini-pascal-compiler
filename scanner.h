@@ -12,6 +12,7 @@ scanner.h is responsible for tokenizing our input for Pascal.
 
 extern unsigned pclineno;
 extern int pcscanerrors;
+extern int pcscanwarnings;
 
 pctoken *pcgettoken(FILE *fp);
 

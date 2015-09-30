@@ -54,6 +54,7 @@ const char *pcsymstr[numsyms] = {
 	"arraysym",
 	"ofsym",
 	"charsym",
+	"stringsym",
 	"integersym",
 	"realsym",
 	"varsym",
@@ -61,7 +62,8 @@ const char *pcsymstr[numsyms] = {
 	/* Constants */
 	"integernosym",
 	"realnosym",
-	"stringsym",
+	"stringvalsym",
+	"charvalsym",
 
 	/* Built-in functions */
 	"chrsym",

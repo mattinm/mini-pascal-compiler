@@ -78,8 +78,10 @@ main(int argc, char **argv) {
 			printf(", %d ", token->val.ival);
 		} else if (token->sym == realnosym) {
 			printf(", %f ", token->val.rval);
-		} else if (token->sym == stringsym) {
+		} else if (token->sym == stringvalsym) {
 			printf(", %s ", token->val.str);
+		} else if (token->sym == charvalsym) {
+			printf(", %c ", token->val.cval);
 		}
 
 		printf(">\n");
