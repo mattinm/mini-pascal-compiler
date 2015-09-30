@@ -23,3 +23,4 @@ lex.yy.c
 
 ## Programs
 mini-pascal-compiler
+yy-mini-pascal-compiler

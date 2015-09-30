@@ -24,17 +24,17 @@ whitespace	[ \t\n\r]+
 
 %%
 
-\( 				{DEBUG_PRINTF(("<, LPAREN>\n")); return LPAREN; }
-\) 				{DEBUG_PRINTF(("<, RPAREN>\n")); return RPAREN; }
-\[ 				{DEBUG_PRINTF(("<, LBRACK>\n")); return LBRACK; }
-\] 				{DEBUG_PRINTF(("<, RBRACK>\n")); return RBRACK; }
+\( 				{DEBUG_PRINTF(("< LPAREN >\n")); return LPAREN; }
+\) 				{DEBUG_PRINTF(("<, RPAREN >\n")); return RPAREN; }
+\[ 				{DEBUG_PRINTF(("<, LBRACK >\n")); return LBRACK; }
+\] 				{DEBUG_PRINTF(("<, RBRACK >\n")); return RBRACK; }
 
-\.				{DEBUG_PRINTF(("<, DOT>\n")); return DOT; }
-\,				{DEBUG_PRINTF(("<, COMMA>\n")); return COMMA; }
-\;				{DEBUG_PRINTF(("<, SEMICOLON>\n")); return SEMICOLON; }
-\:				{DEBUG_PRINTF(("<, COLON>\n")); return COLON; }
+\.				{DEBUG_PRINTF(("<, DOT >\n")); return DOT; }
+\,				{DEBUG_PRINTF(("<, COMMA >\n")); return COMMA; }
+\;				{DEBUG_PRINTF(("<, SEMICOLON >\n")); return SEMICOLON; }
+\:				{DEBUG_PRINTF(("<, COLON >\n")); return COLON; }
 
-":="			{DEBUG_PRINTF(("<, ASSIGNOP>\n")); return ASSIGNOP; }
+":="			{DEBUG_PRINTF(("<, ASSIGNOP >\n")); return ASSIGNOP; }
 "<"				{DEBUG_PRINTF(("LT\n")); return LT; }
 ">"				{DEBUG_PRINTF(("GT\n")); return GT; }
 "<="			{DEBUG_PRINTF(("LTE\n")); return LTE; }
@@ -78,23 +78,19 @@ whitespace	[ \t\n\r]+
 
 {whitespace}	{ /* whitespace */ }
 
-"//".*		{DEBUG_PRINT(("<%s, comment>", yytext)); /* skip comment to end of line */ }
-"(*"		{BEGIN(MLCSTAR); }
-"{"			{BEGIN(MLCBRACE); }		
-
-<MLCSTAR> {
-	"*)"	{BEGIN(INITIAL); }
-	[^*\n]+	{ /* eat comment in chunks */ }
-	"*"		{ /* eat the lone star */ }
-	\n 		{ yylineno++; }
-}
-
-<MLCBRACE> {
-	"}"		{BEGIN(INITIAL); }
-	[^\n]+	{ /* eat comment in chunks */ }
-	\n 		{ yylineno++; }
-}
+"//".*			{DEBUG_PRINTF(("<%s, comment>", yytext)); /* skip comment to end of line */ }
+"(*"			{BEGIN(MLCSTAR); }
+"{"				{BEGIN(MLCBRACE); }		
 
 .				{printf("[%d] Unknown character: %s\n", yylineno, yytext); }
+
+<MLCSTAR>"*)"	{BEGIN(INITIAL); }
+[^*\n]+			{ /* eat comment in chunks */ }
+"*"				{ /* eat the lone star */ }
+\n 				{ yylineno++; }
+
+<MLCBRACE>"}"	{BEGIN(INITIAL); }
+[^\n]+			{ /* eat comment in chunks */ }
+\n 				{ yylineno++; }
 
 %%

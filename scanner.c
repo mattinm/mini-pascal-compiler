@@ -204,7 +204,90 @@ pcgettoken(FILE *fp) {
 	sym = eofsym;
 	val.ival = 0;
 
-	/* check the easy stuff first, the terminators */
+	/* skip over single-line comments */
+	if (cur == '/') {
+		if (next == '/') {
+			/* consume up to the end of line */
+			while (next != '\n' && next != EOF) {
+				pcgetnextc(&cur, &next, fp);
+			}
+
+			/* put the \n token back and get the next token */
+			if (next == EOF) return NULL;
+			pcungetc(next, fp);
+			return pcgettoken(fp);
+		}
+	}
+
+	/* skip over multi-line comments */
+	if (cur == '(' || cur == '{') {
+		char end1, end2;
+
+		/* determine our ending 2-char sequence */
+		if (cur == '(' && next == '*') {
+			end1 = '*';
+			end2 = ')';
+		} else if (cur == '{') {
+			end1 = '}';
+			end2 = 0;
+		} else {
+			end1 = 0;
+			end2 = 0;
+		}
+
+		/* only skip if we have an ending sequence */
+		if (end1) {
+			/* store our starting lineno, since it will likely change */
+			unsigned startinglineno = pclineno;
+
+			while (1) {
+				/* match the first part */
+				if (cur == end1) {
+					/* only 1 to match, so leave our next */
+					if (!end2) {
+						break;
+					}
+
+					/* 2 to match, so grab the next value */
+					if (end2 && next == end2) {
+						pcgetnextc(&cur, &next, fp);
+						break;
+					}
+				}
+
+				/* warn if we hit the end of file without terminating */
+				if (cur == EOF) {
+					if (end2) {
+						pcerror("{%d} ERR: Multiline comment missing termintors: %c%c", startinglineno, end1, end2);
+					} else {
+						pcerror("{%d} ERR: Multiline comment missing termintor: %c", startinglineno, end1);
+					}
+
+					return NULL;
+				}
+
+				/* add to our linecount on \n */
+				if (cur == '\n') {
+					++pclineno;
+				}
+
+				/* keep skipping characters */
+				pcgetnextc(&cur, &next, fp);
+			}
+
+			/* skip over the whitespace before the next tokens */
+			pcgetnextc(&cur, &next, fp);
+			pcskipwhitespace(&cur, &next, fp);
+
+			/* end-of-file? */
+			if (cur == EOF) {
+				pcresetline();
+				return NULL;
+			}
+		}
+	}
+
+	/* check the terminators */
 	if (pcistermintor(cur)) {
 		switch (cur) {
 			case '(':	sym = lparensym; break;
