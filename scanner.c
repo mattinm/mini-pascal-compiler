@@ -9,6 +9,11 @@
 
 #define LINE_BUFF		2048
 
+#define PCGETTOKEN_RECURSE(N, FP)	\
+	if (N == EOF) return NULL;	\
+	pcungetc(N, FP);				\
+	return pcgettoken(FP);
+
 int pcscanerrors = 0;
 int pcscanwarnings = 0;
 
@@ -213,9 +218,7 @@ pcgettoken(FILE *fp) {
 			}
 
 			/* put the \n token back and get the next token */
-			if (next == EOF) return NULL;
-			pcungetc(next, fp);
-			return pcgettoken(fp);
+			PCGETTOKEN_RECURSE(next, fp);
 		}
 	}
 
@@ -275,15 +278,8 @@ pcgettoken(FILE *fp) {
 				pcgetnextc(&cur, &next, fp);
 			}
 
-			/* skip over the whitespace before the next tokens */
-			pcgetnextc(&cur, &next, fp);
-			pcskipwhitespace(&cur, &next, fp);
-
-			/* end-of-file? */
-			if (cur == EOF) {
-				pcresetline();
-				return NULL;
-			}
+			/* put the next token back and get the next token */
+			PCGETTOKEN_RECURSE(next, fp);
 		}
 	}
 
@@ -376,10 +372,7 @@ pcgettoken(FILE *fp) {
 					++pcscanerrors;
 
 					/* go to the next token */
-					if (next == EOF) return NULL;
-
-					pcungetc(next, fp);
-					return pcgettoken(fp);
+					PCGETTOKEN_RECURSE(next, fp);
 				}
 			} 
 			/* if we don't have a terminal / whitespace / random char, ill formed real number */
@@ -395,10 +388,7 @@ pcgettoken(FILE *fp) {
 					++pcscanerrors;
 
 					/* go to the next token */
-					if (next == EOF) return NULL;
-
-					pcungetc(next, fp);
-					return pcgettoken(fp);
+					PCGETTOKEN_RECURSE(next, fp);
 			}
 
 			/* we have a legitimate real number! calculate and create our token */
@@ -420,10 +410,7 @@ pcgettoken(FILE *fp) {
 			++pcscanerrors;
 
 			/* go to the next token */
-			if (next == EOF) return NULL;
-
-			pcungetc(next, fp);
-			return pcgettoken(fp);
+			PCGETTOKEN_RECURSE(next, fp);
 		}
 
 		/* we have a good integer! */
@@ -453,9 +440,7 @@ pcgettoken(FILE *fp) {
 			++pcscanerrors;
 
 			/* go to the next token */
-			if (next == EOF) return NULL;
-			pcungetc(next, fp);
-			return pcgettoken(fp);
+			PCGETTOKEN_RECURSE(next, fp);
 		}
 
 		/* warn about empty strings */
@@ -501,10 +486,7 @@ pcgettoken(FILE *fp) {
 			++pcscanerrors;
 
 			/* go to the next token */
-			if (next == EOF) return NULL;
-
-			pcungetc(next, fp);
-			return pcgettoken(fp);
+			PCGETTOKEN_RECURSE(next, fp);
 		}
 
 		/* determine what kind of symbol we have */
@@ -522,10 +504,7 @@ pcgettoken(FILE *fp) {
 		++pcscanerrors;
 
 		/* get the next token */
-		if (next == EOF) return NULL;
-
-		pcungetc(next, fp);
-		return pcgettoken(fp);
+		PCGETTOKEN_RECURSE(next, fp);
 	}
 
 	/* unget our next value (so it's our current in next call) */
