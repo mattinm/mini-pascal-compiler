@@ -14,6 +14,12 @@ extern unsigned pclineno;
 extern int pcscanerrors;
 extern int pcscanwarnings;
 
+/*
+Gets the next token from the stream, or NULL if consumed.
+
+@param fp the FILE pointer
+@return a malloc'd next token, or NULL if consumed
+*/
 pctoken *pcgettoken(FILE *fp);
 
 #endif /* SCANNER_H */

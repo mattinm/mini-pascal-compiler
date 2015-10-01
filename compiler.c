@@ -3,6 +3,7 @@
 #ifndef YYCOMPILE
 # include "tokens.h"
 # include "scanner.h"
+# include "symtab.h"
 # include "io.h"
 #endif /* YYCOMPILE */
 
@@ -69,6 +70,9 @@ main(int argc, char **argv) {
 		//printf("%d\n", token);
 	}
 #else
+	/* initialize our symbol table */
+	pcintializesymtab();
+
 	while ((token = pcgettoken(fp))) {
 		printf("< %s ", pcsymstr[token->sym]);
 
@@ -87,9 +91,13 @@ main(int argc, char **argv) {
 		printf(">\n");
 	}
 
+	/* spit out errors */
 	if (pcscanerrors) {
 		printf("\n%d ERRORS during scanning!\n", pcscanerrors);
 	}
+
+	/* print our symbol table */
+	pcprintsymtab();
 #endif /* YYCOMPILE */
 
 	return EXIT_SUCCESS;

@@ -7,6 +7,9 @@ tokens.h contains the definitons for all of our tokens.
 #ifndef TOKENS_H
 #define TOKENS_H
 
+/*
+All of our possible sym value types.
+*/
 typedef union symval {
 	int ival;
 	double rval;

@@ -8,7 +8,7 @@ LEX = scanner.l
 PARSE = parser.y
 PARSEFLAGS = -v -d
 REMOVEFILES = parser.tab.* lex.yy.* $(PROJNAME) $(YYNAME) *.s *.output *.o
-SOURCES = compiler.c io.c scanner.c tokens.c
+SOURCES = compiler.c io.c scanner.c symtab.c tokens.c
 YYSOURCES = compiler.c parser.tab.c lex.yy.c
 
 UNAME_S := $(shell uname -s)
