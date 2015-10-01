@@ -10,87 +10,92 @@ compiler.
 #include <math.h>		
 #include <string.h>		
 %}
-
-%option yylineno 	
+	
 %option caseless	
 
 %x MLCSTAR			
 %x MLCBRACE 		
 
+addop		[+-]
+mulop		[*/]|"mod"|"div"
 digit		[0-9]
 real 		{digit}+\.{digit}+([eE][+-]?{digit}+)?
 id 			[a-z][a-z0-9]*
-whitespace	[ \t\n\r]+
+whitespace	[ \t\r]+
 
 %%
 
 \( 				{DEBUG_PRINTF(("< LPAREN >\n")); return LPAREN; }
-\) 				{DEBUG_PRINTF(("<, RPAREN >\n")); return RPAREN; }
-\[ 				{DEBUG_PRINTF(("<, LBRACK >\n")); return LBRACK; }
-\] 				{DEBUG_PRINTF(("<, RBRACK >\n")); return RBRACK; }
+\) 				{DEBUG_PRINTF(("< RPAREN >\n")); return RPAREN; }
+\[ 				{DEBUG_PRINTF(("< LBRACK >\n")); return LBRACK; }
+\] 				{DEBUG_PRINTF(("< RBRACK >\n")); return RBRACK; }
 
-\.				{DEBUG_PRINTF(("<, DOT >\n")); return DOT; }
-\,				{DEBUG_PRINTF(("<, COMMA >\n")); return COMMA; }
-\;				{DEBUG_PRINTF(("<, SEMICOLON >\n")); return SEMICOLON; }
-\:				{DEBUG_PRINTF(("<, COLON >\n")); return COLON; }
+\.				{DEBUG_PRINTF(("< DOT >\n")); return DOT; }
+\,				{DEBUG_PRINTF(("< COMMA >\n")); return COMMA; }
+\;				{DEBUG_PRINTF(("< SEMICOLON >\n")); return SEMICOLON; }
+\:				{DEBUG_PRINTF(("< COLON >\n")); return COLON; }
 
-":="			{DEBUG_PRINTF(("<, ASSIGNOP >\n")); return ASSIGNOP; }
-"<"				{DEBUG_PRINTF(("LT\n")); return LT; }
-">"				{DEBUG_PRINTF(("GT\n")); return GT; }
-"<="			{DEBUG_PRINTF(("LTE\n")); return LTE; }
-">="			{DEBUG_PRINTF(("GTE\n")); return GTE; }
-"<>"			{DEBUG_PRINTF(("NEQ\n")); return NEQ; }
-"="				{DEBUG_PRINTF(("EQ\n")); return EQ; }
+{addop}			{yylval.chval = yytext[0]; DEBUG_PRINTF(("< ADDOP , %c >", yylval.chval)); return ADDOP; }
+{mulop}			{yylval.chval = yytext[0]; DEBUG_PRINTF(("< MULOP , %c >", yylval.chval)); return MULOP; }
 
-"program"		{DEBUG_PRINTF(("PROGRAM\n")); return PROGRAM; }
-"procedure"		{DEBUG_PRINTF(("PROCEDURE\n")); return PROCEDURE; }
-"function"		{DEBUG_PRINTF(("FUNCTION\n")); return FUNCTION; }
+":="			{DEBUG_PRINTF(("< ASSIGNOP >\n")); return ASSIGNOP; }
+"<"				{DEBUG_PRINTF(("< LT >\n")); return LT; }
+">"				{DEBUG_PRINTF(("< GT >\n")); return GT; }
+"<="			{DEBUG_PRINTF(("< LTE >\n")); return LTE; }
+">="			{DEBUG_PRINTF(("< GTE >\n")); return GTE; }
+"<>"			{DEBUG_PRINTF(("< NEQ >\n")); return NEQ; }
+"="				{DEBUG_PRINTF(("< EQ >\n")); return EQ; }
 
-"begin"			{DEBUG_PRINTF(("BEGINS\n")); return BEGINS; }
-"end"			{DEBUG_PRINTF(("END\n")); return END; }
+"program"		{DEBUG_PRINTF(("< PROGRAM >\n")); return PROGRAM; }
+"procedure"		{DEBUG_PRINTF(("< PROCEDURE >\n")); return PROCEDURE; }
+"function"		{DEBUG_PRINTF(("< FUNCTION >\n")); return FUNCTION; }
 
-"do"			{DEBUG_PRINTF(("DO\n")); return DO; }
-"while"			{DEBUG_PRINTF(("WHILE\n")); return WHILE; }
+"begin"			{DEBUG_PRINTF(("< BEGINS >\n")); return BEGINS; }
+"end"			{DEBUG_PRINTF(("< END >\n")); return END; }
 
-"if"			{DEBUG_PRINTF(("IF\n")); return IF; }
-"then"			{DEBUG_PRINTF(("THEN\n")); return THEN; }
-"else"			{DEBUG_PRINTF(("ELSE\n")); return ELSE; }
+"do"			{DEBUG_PRINTF(("< DO >\n")); return DO; }
+"while"			{DEBUG_PRINTF(("< WHILE >\n")); return WHILE; }
 
-"and"			{DEBUG_PRINTF(("AND\n")); return AND; }
-"or"			{DEBUG_PRINTF(("OR\n")); return OR; }
-"not"			{DEBUG_PRINTF(("NOT\n")); return NOT; }
+"if"			{DEBUG_PRINTF(("< IF >\n")); return IF; }
+"then"			{DEBUG_PRINTF(("< THEN >\n")); return THEN; }
+"else"			{DEBUG_PRINTF(("< ELSE >\n")); return ELSE; }
 
-"var"			{DEBUG_PRINTF(("VAR\n")); return VAR; }
-"array"			{DEBUG_PRINTF(("ARRAY\n")); return ARRAY; }
+"and"			{DEBUG_PRINTF(("< AND >\n")); return AND; }
+"or"			{DEBUG_PRINTF(("< OR >\n")); return OR; }
+"not"			{DEBUG_PRINTF(("< NOT >\n")); return NOT; }
 
-"read"			{DEBUG_PRINTF(("READ\n")); return READ; }
-"readln"		{DEBUG_PRINTF(("READLN\n")); return READLN; }
-"write"			{DEBUG_PRINTF(("WRITE\n")); return WRITE; }
-"writeln"		{DEBUG_PRINTF(("WRITELN\n")); return WRITELN; }
+"var"			{DEBUG_PRINTF(("< VAR >\n")); return VAR; }
+"array"			{DEBUG_PRINTF(("< ARRAY >\n")); return ARRAY; }
 
-"integer"		{DEBUG_PRINTF(("INTEGER\n")); return INTEGER; }
-{digit}			{yylval.ival = atoi(yytext); DEBUG_PRINTF(("INTNO: %d\n", yylval.ival)); return INTNO; }
+"read"			{DEBUG_PRINTF(("< READ >\n")); return READ; }
+"readln"		{DEBUG_PRINTF(("< READLN >\n")); return READLN; }
+"write"			{DEBUG_PRINTF(("< WRITE >\n")); return WRITE; }
+"writeln"		{DEBUG_PRINTF(("< WRITELN >\n")); return WRITELN; }
 
-"real"			{DEBUG_PRINTF(("REAL\n")); return REAL; }
-{real}			{yylval.rval = atof(yytext); DEBUG_PRINTF(("REALNO: %f\n", yylval.rval)); return REALNO; }
+"integer"		{DEBUG_PRINTF(("< INTEGER >\n")); return INTEGER; }
+{digit}			{yylval.ival = atoi(yytext); DEBUG_PRINTF(("< INTNO , %d >\n", yylval.ival)); return INTNO; }
 
-{id}			{yylval.id = strtolower(strdup(yytext)); DEBUG_PRINTF(("ID: %s\n", yylval.id)); return ID; }
+"real"			{DEBUG_PRINTF(("< REAL >\n")); return REAL; }
+{real}			{yylval.rval = atof(yytext); DEBUG_PRINTF(("< REALNO, %f >\n", yylval.rval)); return REALNO; }
+
+{id}			{yylval.id = strtolower(strdup(yytext)); DEBUG_PRINTF(("< ID , %s >\n", yylval.id)); return ID; }
 
 {whitespace}	{ /* whitespace */ }
+\n 				{ DEBUG_PRINTF(("[%d]\n\n", yylineno)); ++yylineno; }
 
-"//".*			{DEBUG_PRINTF(("<%s, comment>", yytext)); /* skip comment to end of line */ }
+"//".*			{ /* skip comment to end of line */ }
 "(*"			{BEGIN(MLCSTAR); }
 "{"				{BEGIN(MLCBRACE); }		
 
-.				{printf("[%d] Unknown character: %s\n", yylineno, yytext); }
+.				{fprintf(stderr, "{%d} Unknown character: %s\n", yylineno, yytext); }
 
-<MLCSTAR>"*)"	{BEGIN(INITIAL); }
-[^*\n]+			{ /* eat comment in chunks */ }
-"*"				{ /* eat the lone star */ }
-\n 				{ yylineno++; }
+<MLCSTAR>"*)"		{BEGIN(INITIAL); }
+<MLCSTAR>[^*\n]+	{ /* eat comment in chunks */ }
+<MLCSTAR>"*"		{ /* eat the lone star */ }
+<MLCSTAR>\n 		{ yylineno++; }
 
-<MLCBRACE>"}"	{BEGIN(INITIAL); }
-[^\n]+			{ /* eat comment in chunks */ }
-\n 				{ yylineno++; }
+<MLCBRACE>"}"		{BEGIN(INITIAL); }
+<MLCBRACE>[^\n]+	{ /* eat comment in chunks */ }
+<MLCBRACE>\n 		{ yylineno++; }
 
 %%

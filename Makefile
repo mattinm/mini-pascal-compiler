@@ -25,8 +25,10 @@ yy: $(YYNAME)
 
 all: $(PROJNAME) $(YYNAME)
 
-debug: CFLAGS += -DDEBUG
-debug: $(PROJNAME)
+debug: debughand debugyy
+
+debughand: CFLAGS += -DDEBUG
+debughand: $(PROJNAME)
 
 debugyy: YYCFLAGS += -DDEBUG
 debugyy: $(YYNAME)
