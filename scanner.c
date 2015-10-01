@@ -9,6 +9,7 @@
 
 #define LINE_BUFF		2048
 
+/* macro to recursively call pcgettoken when needed */
 #define PCGETTOKEN_RECURSE(N, FP)	\
 	if (N == EOF) return NULL;	\
 	pcungetc(N, FP);				\
