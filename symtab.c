@@ -84,39 +84,39 @@ int pcintializesymtab() {
 	/* this is expanded from scanner.c -> pcgetkeyword() */
 	/* TODO: make a pckeywords struct array */
 	
-	pcaddsym("div", keywordtype, val, 0);
-	pcaddsym("mod", keywordtype, val, 0);
+	pcaddsym("div", keywordtype, (symval)"div", 0);
+	pcaddsym("mod", keywordtype, (symval)"mod", 0);
 
-	pcaddsym("program", keywordtype, val, 0);
-	pcaddsym("procedure", keywordtype, val, 0);
-	pcaddsym("function", keywordtype, val, 0);
-	pcaddsym("begin", keywordtype, val, 0);
-	pcaddsym("end", keywordtype, val, 0);
+	pcaddsym("program", keywordtype, (symval)"program", 0);
+	pcaddsym("procedure", keywordtype, (symval)"procedure", 0);
+	pcaddsym("function", keywordtype, (symval)"function", 0);
+	pcaddsym("begin", keywordtype, (symval)"begin", 0);
+	pcaddsym("end", keywordtype, (symval)"end", 0);
 
-	pcaddsym("and", keywordtype, val, 0);
-	pcaddsym("or", keywordtype, val, 0);
-	pcaddsym("not", keywordtype, val, 0);
+	pcaddsym("and", keywordtype, (symval)"and", 0);
+	pcaddsym("or", keywordtype, (symval)"or", 0);
+	pcaddsym("not", keywordtype, (symval)"not", 0);
 
-	pcaddsym("if", keywordtype, val, 0);
-	pcaddsym("else", keywordtype, val, 0);
-	pcaddsym("then", keywordtype, val, 0);
-	pcaddsym("do", keywordtype, val, 0);
-	pcaddsym("while", keywordtype, val, 0);
+	pcaddsym("if", keywordtype, (symval)"if", 0);
+	pcaddsym("else", keywordtype, (symval)"else", 0);
+	pcaddsym("then", keywordtype, (symval)"then", 0);
+	pcaddsym("do", keywordtype, (symval)"do", 0);
+	pcaddsym("while", keywordtype, (symval)"while", 0);
 
-	pcaddsym("array", keywordtype, val, 0);
-	pcaddsym("of", keywordtype, val, 0);
-	pcaddsym("char", keywordtype, val, 0);
-	pcaddsym("string", keywordtype, val, 0);
-	pcaddsym("integer", keywordtype, val, 0);
-	pcaddsym("real", keywordtype, val, 0);
-	pcaddsym("var", keywordtype, val, 0);
+	pcaddsym("array", keywordtype, (symval)"array", 0);
+	pcaddsym("of", keywordtype, (symval)"of", 0);
+	pcaddsym("char", keywordtype, (symval)"char", 0);
+	pcaddsym("string", keywordtype, (symval)"string", 0);
+	pcaddsym("integer", keywordtype, (symval)"integer", 0);
+	pcaddsym("real", keywordtype, (symval)"real", 0);
+	pcaddsym("var", keywordtype, (symval)"var", 0);
 
-	pcaddsym("chr", keywordtype, val, 0);
-	pcaddsym("ord", keywordtype, val, 0);
-	pcaddsym("read", keywordtype, val, 0);
-	pcaddsym("readln", keywordtype, val, 0);
-	pcaddsym("write", keywordtype, val, 0);
-	pcaddsym("writeln", keywordtype, val, 0);
+	pcaddsym("chr", keywordtype, (symval)"chr", 0);
+	pcaddsym("ord", keywordtype, (symval)"ord", 0);
+	pcaddsym("read", keywordtype, (symval)"read", 0);
+	pcaddsym("readln", keywordtype, (symval)"readln", 0);
+	pcaddsym("write", keywordtype, (symval)"write", 0);
+	pcaddsym("writeln", keywordtype, (symval)"writeln", 0);
 
 	return 1;
 }
