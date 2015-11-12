@@ -3,6 +3,7 @@
 #ifndef YYCOMPILE
 # include "tokens.h"
 # include "scanner.h"
+# include "parser.h"
 # include "symtab.h"
 # include "io.h"
 #endif /* YYCOMPILE */
@@ -41,6 +42,7 @@ main(int argc, char **argv) {
 	int token;
 #else
 	pctoken *token;
+	pctoken *nexttoken;
 #endif /* YYCOMPILE */
 
 	/* read the filename from command line */
@@ -73,22 +75,8 @@ main(int argc, char **argv) {
 	/* initialize our symbol table */
 	pcintializesymtab();
 
-	while ((token = pcgettoken(fp))) {
-		printf("< %s ", pcsymstr[token->sym]);
-
-		if (token->sym == idsym) {
-			printf(", %s ", token->val.id);
-		} else if (token->sym == integernosym) {
-			printf(", %d ", token->val.ival);
-		} else if (token->sym == realnosym) {
-			printf(", %f ", token->val.rval);
-		} else if (token->sym == stringvalsym) {
-			printf(", %s ", token->val.str);
-		} else if (token->sym == charvalsym) {
-			printf(", %c ", token->val.cval);
-		}
-
-		printf(">\n");
+	if (pcparse(fp)) {
+		printf("\nPARSING COMPLETED SUCCESSFULLY!!!!!");
 	}
 
 	/* spit out errors */

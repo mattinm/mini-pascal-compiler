@@ -31,6 +31,7 @@ typedef enum symtype {
 	blocktype,
 
 	/* total count of types */
+	notype,
 	numsymtypes
 } symtype;
 
@@ -43,28 +44,22 @@ extern const char *symtypestr[numsymtypes];
 /*
 Symentry holds links for our table.
 */
+struct symtab;
 typedef struct symentry {
 	const char 	*name;	/* name of the lexeme */
 	symtype 	type;	/* type of the lexeme */
 	symval		val;	/* value of the lexeme */
 	unsigned	lineno;	/* line the lexeme was declared on */
 
+	struct symtab 	*tab;		/* symbol table for this entry (procedures and functions) */
+	symtype 		returntype; /* return type for functions */
+
 	/* link to the next entry */
 	struct symentry *next;
 } symentry;
 
-/*
-Symtabentry holds links for our children.
-*/
-struct symtab;
-typedef struct symtabentry {
-	struct symtab 		*ptr;	/* ptr to the symtab for this child */
-	struct symtabentry 	*next;	/* next child in the list */
-} symtabentry;
-
 struct symtab {
 	struct symtab 		*parent;	/* parent symtab */
-	struct symtabentry 	*children;	/* linked list of children */
 	symentry 			*entries;	/* linked list of entries */
 };
 
@@ -90,7 +85,7 @@ Adds a value to the symbol table.
 @param lineno the line the lexeme is declared on
 @return 1 on success; 0 otherwise
 */
-int pcaddsym(const char *name, symtype type, symval val, unsigned lineno);
+symentry *pcaddsym(const char *name, symtype type, symval val, unsigned lineno);
 
 /*
 Lookup a symbol from the current table.
@@ -109,7 +104,7 @@ the current symbol table.
 @param lineno the line the lexeme is declared on
 @return 1 on success; 0 otherwise
 */
-int pcenterscope(const char *name, symtype type, unsigned lineno);
+symentry *pcenterscope(const char *name, symtype type, unsigned lineno);
 
 /*
 Leaves the current scope, returning to the parent scope.

@@ -171,6 +171,7 @@ pcgetkeyword(char *b, pcsym *sym) {
 	else if (strcmp("integer", b) == 0) *sym = integersym;
 	else if (strcmp("real", b) == 0) *sym = realsym;
 	else if (strcmp("var", b) == 0) *sym = varsym;
+	else if (strcmp("const", b) == 0) *sym = constsym;
 
 	else if (strcmp("chr", b) == 0) *sym = chrsym;
 	else if (strcmp("ord", b) == 0) *sym = ordsym;

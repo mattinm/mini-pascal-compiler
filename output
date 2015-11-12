@@ -1,0 +1,613 @@
+Reading file: tests/goodTest.pas
+
+< programsym >
+< idsym , goodtestprogram >
+[1] program GoodTestProgram;
+
+< semicolonsym >
+[2] 	const
+
+< constsym >
+## ENTERING pcp_constant_definition_part ##
+< idsym , myname >
+## ENTERING pcp_constant_definition ##
+< eqsym >
+< stringvalsym , Marshall >
+[3] 		myname = 'Marshall';
+
+< semicolonsym >
+< idsym , age >
+## ENTERING pcp_constant_definition ##
+< commasym >
+< idsym , yearsalive >
+< eqsym >
+< integernosym , 28 >
+[4] 		age, yearsalive = 28;
+
+< semicolonsym >
+[5] 	var
+
+< varsym >
+## ENTERING pcp_variable_definition_part ##
+< idsym , x >
+## ENTERING pcp_variable_definition ##
+< commasym >
+< idsym , y >
+< commasym >
+< idsym , z >
+< colonsym >
+< integersym >
+[6] 		x, y, z : integer;
+
+< semicolonsym >
+< idsym , a >
+## ENTERING pcp_variable_definition ##
+< commasym >
+< idsym , b >
+< commasym >
+< idsym , c >
+< colonsym >
+< charsym >
+[7] 		a, b, c : char;
+
+< semicolonsym >
+< idsym , f >
+## ENTERING pcp_variable_definition ##
+< colonsym >
+< realsym >
+[8] 		f : real;
+
+< semicolonsym >
+< proceduresym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+< idsym , testprocedure >
+## ENTERING pcp_procedure_declaration ##
+< lparensym >
+< idsym , c1 >
+## ENTERING pcp_formal_parameters ##
+< commasym >
+< idsym , c2 >
+< colonsym >
+< integersym >
+< rparensym >
+[10] 	procedure testProcedure (c1,c2:integer);
+
+< semicolonsym >
+[11] 		var
+
+< varsym >
+## ENTERING pcp_constant_definition_part ##
+## ENTERING pcp_variable_definition_part ##
+< idsym , c >
+## ENTERING pcp_variable_definition ##
+< colonsym >
+< integersym >
+[12] 			c : integer;
+
+< semicolonsym >
+[13] 		begin
+
+< beginsym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+## ENTERING pcp_statement_part ##
+< idsym , c >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c1 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[14] 			c := c1;
+
+< semicolonsym >
+< idsym , c1 >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c2 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[15] 			c1 := c2;
+
+< semicolonsym >
+< idsym , c2 >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[16] 			c2 := c;
+
+< semicolonsym >
+< endsym >
+[17] 		end;
+
+< semicolonsym >
+< functionsym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+< idsym , testfunction >
+## ENTERING pcp_function_declaration ##
+< lparensym >
+< idsym , c1 >
+## ENTERING pcp_formal_parameters ##
+< commasym >
+< idsym , c2 >
+< colonsym >
+< integersym >
+< rparensym >
+< colonsym >
+< integersym >
+[19] 	function testFunction (c1,c2:integer) : integer;
+
+< semicolonsym >
+[20] 		var
+
+< varsym >
+## ENTERING pcp_constant_definition_part ##
+## ENTERING pcp_variable_definition_part ##
+< idsym , c >
+## ENTERING pcp_variable_definition ##
+< colonsym >
+< integersym >
+[21] 			c : integer;
+
+< semicolonsym >
+[22] 		begin
+
+< beginsym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+## ENTERING pcp_statement_part ##
+< idsym , c >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c1 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< addsym >
+< idsym , c2 >
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[23] 			c := c1+c2;
+
+< semicolonsym >
+< endsym >
+[24] 		end;
+
+< semicolonsym >
+< proceduresym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+< idsym , testprocedure2 >
+## ENTERING pcp_procedure_declaration ##
+< lparensym >
+< idsym , c1 >
+## ENTERING pcp_formal_parameters ##
+< commasym >
+< idsym , c2 >
+< colonsym >
+< integersym >
+< rparensym >
+[26] 	procedure testProcedure2 (c1,c2:integer);
+
+< semicolonsym >
+[27] 		var
+
+< varsym >
+## ENTERING pcp_constant_definition_part ##
+## ENTERING pcp_variable_definition_part ##
+< idsym , c >
+## ENTERING pcp_variable_definition ##
+< colonsym >
+< integersym >
+[28] 			c : integer;
+
+< semicolonsym >
+[29] 		begin
+
+< beginsym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+## ENTERING pcp_statement_part ##
+< idsym , c >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c1 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[30] 			c := c1;
+
+< semicolonsym >
+< idsym , c1 >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c2 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[31] 			c1 := c2;
+
+< semicolonsym >
+< idsym , c2 >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , c >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[32] 			c2 := c;
+
+< semicolonsym >
+< endsym >
+[33] 		end;
+
+< semicolonsym >
+[34] begin
+
+[35] 	// This line will be skipped
+
+< beginsym >
+## ENTERING pcp_procedure_and_function_definition_part ##
+## ENTERING pcp_statement_part ##
+< writesym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< stringvalsym , Enter a number to count to from 0:  >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[36] 	write('Enter a number to count to from 0: ');
+
+< semicolonsym >
+< readsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_read ##
+< lparensym >
+< idsym , x >
+< rparensym >
+[37] 	read(x);
+
+< semicolonsym >
+< writesym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< stringvalsym , You entered:  >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[38] 	write('You entered: ');
+
+< semicolonsym >
+< writelnsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< idsym , x >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[39] 	writeln(x);
+
+[41] 	// Test some real numbers
+
+< semicolonsym >
+< idsym , f >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< realnosym , 15.300000 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[42] 	f := 15.3;
+
+< semicolonsym >
+< idsym , f >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< realnosym , 0.000000 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[43] 	f := 3.25e-15;
+
+< semicolonsym >
+< idsym , f >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< realnosym , 1927000000.000000 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[44] 	f := 19.27e+8;
+
+< semicolonsym >
+< idsym , f >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< realnosym , 552000000000.000000 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[45] 	f := 55.2e10;
+
+< semicolonsym >
+< idsym , z >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< integernosym , 0 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[47] 	z := 0;
+
+< semicolonsym >
+< whilesym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_while ##
+< lparensym >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< idsym , z >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< ltsym >
+< idsym , x >
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[48] 	while (z < x) do
+
+< dosym >
+[49] 		begin
+
+< beginsym >
+## ENTERING pcp_statement_part ##
+< writesym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< idsym , z >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+< semicolonsym >
+< writesym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< stringvalsym , ,  >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[50] 			write(z); write(', ');
+
+< semicolonsym >
+< idsym , z >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , z >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< addsym >
+< integernosym , 1 >
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+[51] 			z := z + 1;
+
+< semicolonsym >
+< endsym >
+[52] 		end;
+
+< semicolonsym >
+< writelnsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< idsym , z >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[53] 	writeln(z);
+
+< semicolonsym >
+< writelnsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< ordsym >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+## ENTERING pcp_ord ##
+< lparensym >
+< charvalsym , 0 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+< rparensym >
+[55] 	writeln(ord('0')); // Rest of this line skipped
+
+< semicolonsym >
+< idsym , y >
+## ENTERED pcp_statement ##
+< assignsym >
+## ENTERED pcp_assign ##
+< idsym , z >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< multsym >
+< lparensym >
+## ENTERED pcp_factor ##
+< idsym , z >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< addsym >
+< ordsym >
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+## ENTERING pcp_ord ##
+< lparensym >
+< charvalsym , 0 >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+< minussym >
+< integernosym , 3 >
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+< addsym >
+< idsym , x >
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< idivsym >
+< integernosym , 2 >
+## ENTERED pcp_factor ##
+[56] 	y := z * (z + (* inline comment *) ord('0') - 3) + x div 2;
+
+< semicolonsym >
+< writelnsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< idsym , y >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[57] 	writeln(y);
+
+[61] 	{ Muliline
+	comment
+	}
+
+< semicolonsym >
+< ifsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_if ##
+< lparensym >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< idsym , x >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< gtsym >
+< idsym , y >
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[62] 	if (x > y) then
+
+< thensym >
+[63] 		begin
+
+< beginsym >
+## ENTERING pcp_statement_part ##
+< writelnsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< stringvalsym , x is bigger than y! >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[64] 			writeln('x is bigger than y!');
+
+< semicolonsym >
+[65] 		end
+
+< endsym >
+[66] 	else
+
+< elsesym >
+[67] 		begin
+
+< beginsym >
+## ENTERING pcp_statement_part ##
+< writelnsym >
+## ENTERED pcp_statement ##
+## ENTERED pcp_write ##
+< lparensym >
+< stringvalsym , x is smaller than y! >
+## ENTERED pcp_expression ##
+## ENTERED pcp_simple_expression ##
+## ENTERED pcp_term ##
+## ENTERED pcp_factor ##
+< rparensym >
+[68] 			writeln('x is smaller than y!');
+
+< semicolonsym >
+< endsym >
+[69] 		end;
+
+[74] 	(* Another
+	multline
+	comment
+	*)
+
+< semicolonsym >
+< ifsym >
+## ENTE

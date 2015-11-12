@@ -64,6 +64,7 @@ const char *pcsymstr[numsyms] = {
 	"realnosym",
 	"stringvalsym",
 	"charvalsym",
+	"constsym",
 
 	/* Built-in functions */
 	"chrsym",

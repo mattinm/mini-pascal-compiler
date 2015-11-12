@@ -85,6 +85,7 @@ typedef enum {
 	realnosym,
 	stringvalsym,
 	charvalsym,
+	constsym,
 
 	/* Built-in functions */
 	chrsym,

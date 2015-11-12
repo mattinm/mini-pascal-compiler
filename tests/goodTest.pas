@@ -1,9 +1,36 @@
 program GoodTestProgram;
+	const
+		myname = 'Marshall';
+		age, yearsalive = 28;
 	var
-		x, y, z : integer
-		a, b, c : char
-		f : float
-	;
+		x, y, z : integer;
+		a, b, c : char;
+		f : real;
+
+	procedure testProcedure (c1,c2:integer);
+		var
+			c : integer;
+		begin
+			c := c1;
+			c1 := c2;
+			c2 := c;
+		end;
+
+	function testFunction (c1,c2:integer) : integer;
+		var
+			c : integer;
+		begin
+			c := c1+c2;
+		end;
+
+	procedure testProcedure2 (c1,c2:integer);
+		var
+			c : integer;
+		begin
+			c := c1;
+			c1 := c2;
+			c2 := c;
+		end;
 begin
 	// This line will be skipped
 	write('Enter a number to count to from 0: ');
@@ -21,7 +48,7 @@ begin
 	while (z < x) do
 		begin
 			write(z); write(', ');
-			z := z + 1
+			z := z + 1;
 		end;
 	writeln(z);
 
@@ -50,7 +77,7 @@ begin
 			writeln('z is equal to x');
 		end;
 
-	x := 65
+	x := 65;
 
 	while (x < 90) do
 		begin

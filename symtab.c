@@ -21,7 +21,10 @@ const char *symtypestr[numsymtypes] = {
 	"program",
 	"procedure",
 	"function",
-	"block"
+	"block",
+
+	/* nothingness */
+	"notype"
 };
 
 /*
@@ -76,7 +79,6 @@ int pcintializesymtab() {
 
 	current = root;
 	current->parent		= NULL;
-	current->children 	= NULL;
 	current->entries 	= NULL;
 
 	val.ival = 0;
@@ -110,6 +112,7 @@ int pcintializesymtab() {
 	pcaddsym("integer", keywordtype, (symval)"integer", 0);
 	pcaddsym("real", keywordtype, (symval)"real", 0);
 	pcaddsym("var", keywordtype, (symval)"var", 0);
+	pcaddsym("const", keywordtype, (symval)"const", 0);
 
 	pcaddsym("chr", keywordtype, (symval)"chr", 0);
 	pcaddsym("ord", keywordtype, (symval)"ord", 0);
@@ -122,7 +125,6 @@ int pcintializesymtab() {
 }
 
 void pcprintsymtabnode(symtab *node, unsigned depth) {
-	symtabentry *child;
 	symentry *entry;
 	char tabs[20], *c;
 	int i;
@@ -139,15 +141,21 @@ void pcprintsymtabnode(symtab *node, unsigned depth) {
 	/* print self first */
 	entry = node->entries;
 	while (entry) {
-		printf("%s%s (%s) : %d : %s\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.str);
-		entry = entry->next;
-	}
+		if (entry->type == integertype) {
+			printf("%s%s (%s) : %d : %d\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.ival);
+		} else if (entry->type == realtype) {
+			printf("%s%s (%s) : %d : %f\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.rval);
+		} else if (entry->type == chartype) {
+			printf("%s%s (%s) : %d : %c\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.cval);
+		} else {
+			printf("%s%s (%s) : %d : %s\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.str);
+		}
 
-	/* print all children (will cascade) */
-	child = node->children;
-	while (child) {
-		pcprintsymtabnode(child->ptr, depth+1);
-		child = child->next;
+		/* print the symbol table for the child, if it exists */
+		if (entry->tab) pcprintsymtabnode(entry->tab, depth+1);
+
+		/* go to the next entry */
+		entry = entry->next;
 	}
 }
 
@@ -156,39 +164,48 @@ void pcprintsymtab() {
 	pcprintsymtabnode(root, 0);
 }
 
-int pcaddsym(const char *name, symtype type, symval val, unsigned lineno) {
+symentry *pcaddsym(const char *name, symtype type, symval val, unsigned lineno) {
 	symentry *entry;
 
 	/* make sure we have a root */
-	if (!current) return 0;
+	if (!current) return NULL;
 
 	/* make sure it doesn't yet exist in this scope */
 	if (pclookupsym_internal(name, 1)) {
 		pcerror("{%d} ERR: %s already exists in symbol table.\n", lineno, name);
-		return 0;
+		return NULL;
 	}
 
 	/* populate our entry */
 	if (!(entry = malloc(sizeof(*entry)))) return 0;
-	entry->name 	= strdup(name);
-	entry->type 	= type;
-	entry->val 		= val;
-	entry->lineno	= lineno;
+	entry->name 		= strdup(name);
+	entry->type 		= type;
+	entry->val 			= val;
+	entry->lineno		= lineno;
+	entry->tab 			= NULL;
+	entry->returntype 	= notype;
 
 	/* add to the head of the entries */
 	entry->next			= current->entries;
 	current->entries	= entry;
-	return 1;
+	return entry;
 }
 
 symentry *pclookupsym(const char *name) {
 	return pclookupsym_internal(name, 0);
 }
 
-int pcenterscope(const char *name, symtype type, unsigned lineno) {
-	// add later
+symentry *pcenterscope(const char *name, symtype type, unsigned lineno) {
+	symentry *entry;
+	if (!(entry = pcaddsym(name, type, (symval)0, lineno))) return NULL;
 
-	return 1;
+	/* create our table and make it the current, while updating it's parent */
+	if (!(entry->tab = malloc(sizeof(*(entry->tab))))) return NULL;
+	entry->tab->parent	= current;
+	entry->tab->entries = NULL;
+	current = entry->tab;
+
+	return entry;
 }
 
 int pcleavescope() {

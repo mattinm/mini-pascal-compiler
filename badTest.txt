@@ -1,0 +1,59 @@
+Reading file: tests/badTest.pas
+
+< programsym >
+< idsym , badtestprogram >
+[1] program BadTestProgram;
+
+< semicolonsym >
+[2] 	var
+
+< varsym >
+## ENTERING pcp_constant_definition_part ##
+## ENTERING pcp_variable_definition_part ##
+< idsym , x >
+## ENTERING pcp_variable_definition ##
+< commasym >
+< idsym , y >
+< commasym >
+< idsym , z >
+< colonsym >
+[3] 		x, y, z : integer
+
+< integersym >
+< idsym , a >
+
+[4] PARSE ERROR: Expected ';'.
+===== SYMBOL TABLE =====
+z (integer) : 3 : 0
+y (integer) : 3 : 0
+x (integer) : 3 : 0
+badtestprogram (program) : 1 : badtestprogram
+writeln (keyword) : 0 : writeln
+write (keyword) : 0 : write
+readln (keyword) : 0 : readln
+read (keyword) : 0 : read
+ord (keyword) : 0 : ord
+chr (keyword) : 0 : chr
+const (keyword) : 0 : const
+var (keyword) : 0 : var
+real (keyword) : 0 : real
+integer (keyword) : 0 : integer
+string (keyword) : 0 : string
+char (keyword) : 0 : char
+of (keyword) : 0 : of
+array (keyword) : 0 : array
+while (keyword) : 0 : while
+do (keyword) : 0 : do
+then (keyword) : 0 : then
+else (keyword) : 0 : else
+if (keyword) : 0 : if
+not (keyword) : 0 : not
+or (keyword) : 0 : or
+and (keyword) : 0 : and
+end (keyword) : 0 : end
+begin (keyword) : 0 : begin
+function (keyword) : 0 : function
+procedure (keyword) : 0 : procedure
+program (keyword) : 0 : program
+mod (keyword) : 0 : mod
+div (keyword) : 0 : div
