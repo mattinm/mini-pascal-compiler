@@ -56,6 +56,8 @@ begin
 	y := z * (z + (* inline comment *) ord('0') - 3) + x div 2;
 	writeln(y);
 
+	z := testFunction(x, y) + x;
+
 	{ Muliline
 	comment
 	}

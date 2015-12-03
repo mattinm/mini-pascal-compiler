@@ -37,6 +37,7 @@ const char *pcsymstr[numsyms] = {
 	"semicolonsym",
 	"commasym",
 	"dotsym",
+	"dotdotsym",
 	"lparensym",
 	"rparensym",
 	"lbracksym",

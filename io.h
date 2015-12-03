@@ -14,8 +14,9 @@ extern unsigned pclineno;	/* current line number */
 /*
 Prints out an error message to the error console.
 @see printf.
+@return always return 0
 */
-void pcerror(const char *format, ...);
+int pcerror(const char *format, ...);
 
 /*
 Gets the next character from the FILE.

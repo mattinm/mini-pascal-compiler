@@ -6,6 +6,7 @@
 # include "parser.h"
 # include "symtab.h"
 # include "io.h"
+# include "ast.h"
 #endif /* YYCOMPILE */
 
 #include <stdio.h>
@@ -76,7 +77,10 @@ main(int argc, char **argv) {
 	pcintializesymtab();
 
 	if (pcparse(fp)) {
-		printf("\nPARSING COMPLETED SUCCESSFULLY!!!!!");
+		printf("\nPARSING COMPLETED SUCCESSFULLY!!!!!\n");
+	} else {
+		printf("\nERRORS PARSING!!!!!\n");
+		pcscanerrors = 1;
 	}
 
 	/* spit out errors */
@@ -84,8 +88,16 @@ main(int argc, char **argv) {
 		printf("\n%d ERRORS during scanning!\n", pcscanerrors);
 	}
 
+	/* save our AST tree */
+	FILE *astfp;
+	if ((astfp = fopen("astfp.txt", "w"))) {
+		AST_print(astroot, astfp);
+		printf("\nSaved astfp.txt\n");
+	}
+	AST_cleanup(&astroot);
+
 	/* print our symbol table */
-	pcprintsymtab();
+	/*pcprintsymtab();*/
 #endif /* YYCOMPILE */
 
 	return EXIT_SUCCESS;

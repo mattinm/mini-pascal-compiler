@@ -58,6 +58,7 @@ typedef enum {
 	semicolonsym,
 	commasym,
 	dotsym,
+	dotdotsym,
 	lparensym,
 	rparensym,
 	lbracksym,

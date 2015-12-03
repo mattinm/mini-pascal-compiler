@@ -294,7 +294,14 @@ pcgettoken(FILE *fp) {
 			case ']':	sym = rbracksym; break;
 			case ';':	sym = semicolonsym; break;
 			case ',':	sym = commasym; break;
-			case '.':	sym = dotsym; break;
+			case '.':	
+				if (next == '.') {
+					sym = dotdotsym;
+					pcgetnextc(&cur, &next, fp);
+				} else {
+					sym = dotsym;
+				}
+				break;
 			case ':':
 				if (next == '=') {
 					sym = assignsym;

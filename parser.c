@@ -1,7 +1,10 @@
 #include "parser.h"
 #include "symtab.h"
+#include "ast.h"
+#include "io.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 int pcp_block();
 int pcp_statement_part();
@@ -10,59 +13,32 @@ int pcp_constant_definition();
 int pcp_expression();
 
 FILE *fp = NULL;
+pctoken *lasttoken = NULL;
 pctoken *token = NULL;
 pctoken *nexttoken = NULL;
 
 #define NEXTTOKEN() if (!pcp_next()) return 0
 #define ADDSYM(NAME, TYPE, TOKEN) if (!pcaddsym(NAME, TYPE, (TOKEN)->val, (TOKEN)->lineno)) return 0
 #define ADDTOKEN(TAIL, TOKEN) if (!(TAIL = tokenlist_add(TAIL, TOKEN))) return 0
+#define EXPECT(SYM) if (!pcp_expect(SYM)) return 0
+#define EXPECT2(SYM1, SYM2) if (!pcp_expect2(SYM1, SYM2)) return 0
 
 typedef struct pctokenlist {
 	pctoken *token;
 	struct pctokenlist *next;
 } pctokenlist;
 
-int
-pcp_error(const char *str) {
-	printf("\n[%u] PARSE ERROR: %s", token->lineno, str);
-	return 0;
-}
-
-int
-sym_to_type(pcsym sym, symtype *type) {
-	if (sym == integersym) *type = integertype;
-	else if (sym == realsym) *type = realtype;
-	else if (sym == stringsym) *type = stringtype;
-	else if (sym == charsym) *type = chartype;
-	else return pcp_error("Unknown type. Arrays and custom types not yet supported.");
-
-	return 1;
-}
-
-pctokenlist *
-tokenlist_add(pctokenlist *tail, pctoken *token) {
-	pctokenlist *next;
-
-	if (!(next = malloc(sizeof(*next)))) {
-		pcp_error("Out of memory.");
-		return NULL;
-	}
-	next->token = token;
-	next->next = NULL;
-
-	tail->next = next;
-	return next;
-}
 
 /* Updates the tokens */
 int
 pcp_next() {
 	/* get the next token */
+	lasttoken = token;
 	token = nexttoken;
 	nexttoken = pcgettoken(fp);
 
 	if (!token) {
-		return pcp_error("Unexpected end of tokens.");
+		return pcerror("Unexpected end of tokens.\n");
 	}
 
 	/* print the line from the scanner */
@@ -84,6 +60,95 @@ pcp_next() {
 	return 1;
 }
 
+/* Accepts a given symbol and skips the next symbol if a match is found.
+ 
+@param sym the symbol to match against
+@return 1 on success; 0 otherwise
+*/
+int
+pcp_accept(pcsym sym) {
+	if (token->sym == sym) {
+		return pcp_next() != 0;
+	}
+
+	return 0;
+}
+
+/* Forces a specific symbol to be found.
+ 
+@param sym the symbol to match against
+@return 1 on success; 0 otherwise
+*/
+int
+pcp_expect(pcsym sym) {
+	if (pcp_accept(sym)) {
+		return 1;
+	}
+
+	return pcerror("[%u] pcp_expect: Unexpected symbol: %s vs %s\n", token->lineno, token->val, pcsymstr[sym]);
+}
+
+/* Forces two specific symbols to be found in sequence.
+ 
+@param sym1 the first symbol to match against
+@param sym2 the second symbol to match against
+@return 1 on success; 0 otherwise
+*/
+int
+pcp_expect2(pcsym sym1, pcsym sym2) {
+pcsym tmpsym = token->sym;
+
+	if (pcp_accept(sym1)) {
+		if (pcp_accept(sym2)) {
+			return 1;
+		}
+
+		return pcerror("[%u] pcp_expect: Unexpected end to symbol sequence: %s %s vs %s %s\n", 
+			token->lineno, pcsymstr[tmpsym], pcsymstr[token->sym], pcsymstr[sym1], pcsymstr[sym2]);
+	}
+
+	return pcerror("[%u] pcp_expect: Unexpected start to symbol sequence: %s %s vs %s %s\n", 
+		token->lineno, pcsymstr[tmpsym], pcsymstr[nexttoken->sym], pcsymstr[sym1], pcsymstr[sym2]);
+}
+
+/* Converts a symbol to a symtype used to store in the symbol table.
+ 
+@param sym the symbol to check for type
+@param type return value of the type
+@return 1 on success; 0 otherwise
+*/
+int
+sym_to_type(pcsym sym, symtype *type) {
+	if (sym == integersym) *type = integertype;
+	else if (sym == realsym) *type = realtype;
+	else if (sym == stringsym) *type = stringtype;
+	else if (sym == charsym) *type = chartype;
+	else return pcerror("Unknown type. Arrays and custom types not yet supported.\n");
+
+	return 1;
+}
+
+/* Adds a pctoken to the end of our list.
+ 
+@param tail the tail of our list
+@param token the token to add
+@return the new tail pointer
+*/
+pctokenlist *
+tokenlist_add(pctokenlist *tail, pctoken *token) {
+	pctokenlist *next;
+
+	if (!(next = malloc(sizeof(*next)))) {
+		pcerror("Out of memory.\n");
+		return NULL;
+	}
+	next->token = token;
+	next->next = NULL;
+
+	tail->next = next;
+	return next;
+}
+
 pctoken *
 pcp_const_no_id(symtype *type) {
 	if (token->sym == integernosym) 	 *type = integertype;
@@ -95,123 +160,186 @@ pcp_const_no_id(symtype *type) {
 	return token;
 }
 
+/* Ensures the the ord() function is called correctly.
+ 
+@return 1 on success; 0 otherwise
+*/
 int
-pcp_ord() {
+pcp_ord(AST *ast) {
+	AST *astord;
+
 	printf("## ENTERING pcp_ord ##\n");
 
-	if (token->sym != ordsym) return 0;
+	EXPECT(lparensym);
 
-	NEXTTOKEN();
-	if (token->sym != lparensym) return pcp_error("Expected '('");
+	astord = AST_initialize(ordasm);
+	AST_addchild(ast, astord);
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	if (!pcp_expression(astord)) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != rparensym) return pcp_error("Expected ')'");
+	EXPECT(rparensym);
 
 	return 1;
 }
 
+/* Ensures the the chr() function is called correctly.
+ 
+@return 1 on success; 0 otherwise
+*/
 int
-pcp_chr() {
+pcp_chr(AST *ast) {
+	AST *astchr;
+
 	printf("## ENTERING pcp_chr ##\n");
 
-	if (token->sym != chrsym) return 0;
+	EXPECT(lparensym);
 
-	NEXTTOKEN();
-	if (token->sym != lparensym) return pcp_error("Expected '('");
+	astchr = AST_initialize(chrasm);
+	AST_addchild(ast, astchr);
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	if (!pcp_expression(astchr)) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != rparensym) return pcp_error("Expected ')'");
+	EXPECT(rparensym);
 
 	return 1;
 }
 
 int
-pcp_factor() {
+pcp_factor(AST *ast) {
+	AST *astfactor;
+	AST *astother;
+	pctoken *ltoken;
+
 	printf("## ENTERED pcp_factor ##\n");
 
-	if (token->sym == notsym) {
-		NEXTTOKEN();
-		return pcp_factor(); 
+	astfactor = AST_initialize(factorasm);
+	AST_addchild(ast, astfactor);
+
+	if (pcp_accept(notsym)) {
+		astother = AST_initialize(notasm);
+		AST_addchild(astfactor, astother);
+		return pcp_factor(astfactor); 
 	}
 
-	if (token->sym == idsym) {
-		if (nexttoken->sym == lparensym) {
-			NEXTTOKEN();
-			return pcp_application();
-		} if (nexttoken->sym == lbracksym) {
-			return pcp_error("Arrays not yet supported.");
+	if (pcp_accept(idsym)) {
+		ltoken = lasttoken;
+		if (pcp_accept(lparensym)) {
+			return pcp_application(astfactor, ltoken);
+		} if (pcp_accept(lbracksym)) {
+			return pcerror("Arrays not yet supported.\n");
+		} else {
+			astother = AST_initialize(idasm);
+			astother->name = strdup(ltoken->val.id);
+			AST_addchild(astfactor, astother);
 		}
 		
 		return 1;
 	}
 
-	if (token->sym == ordsym) {
-		return pcp_ord();
+	if (pcp_accept(ordsym)) {
+		return pcp_ord(astfactor);
 	}
 
-	if (token->sym == chrsym) {
-		return pcp_chr();
+	if (pcp_accept(chrsym)) {
+		return pcp_chr(astfactor);
 	}
 
-	if (token->sym == lparensym) {
-		NEXTTOKEN();
-		if (!pcp_expression()) return 0;
+	if (pcp_accept(lparensym)) {
+		if (!pcp_expression(astfactor)) return 0;
 
-		NEXTTOKEN();
-		if (token->sym != rparensym) return pcp_error("Expected ')'.");
+		pcp_expect(rparensym);
 
 		return 1;
 	}
 
-	return (token->sym == integernosym || token->sym == realnosym || token->sym == stringvalsym || token->sym == charvalsym);
+	/* see if we have an inline 'constant' value */
+	if (token->sym == integernosym || token->sym == realnosym || token->sym == stringvalsym || token->sym == charvalsym) {
+		astother = AST_initialize(valasm);
+		astother->sym = token->sym;
+
+		if (token->sym == stringvalsym) {
+			astother->val.str = strdup(token->val.str);
+		} else {
+			astother->val = token->val;
+		}
+
+		AST_addchild(astfactor, astother);
+		NEXTTOKEN();
+		return 1;
+	}
+
+	/* failed all our branches */
+	return 0;
 }
 
 int
-pcp_term() {
+pcp_term(AST *ast) {
+	AST *astterm;
+	AST *astmult;
+
 	printf("## ENTERED pcp_term ##\n");
 
-	if (!pcp_factor()) return 0;
+	astterm = AST_initialize(termasm);
+	AST_addchild(ast, astterm);
 
-	while (nexttoken->sym == multsym || nexttoken->sym == idivsym || nexttoken->sym == divsym || nexttoken->sym == andsym) {
-		NEXTTOKEN();
-		NEXTTOKEN();
-		if (!pcp_factor()) return 0;
+	if (!pcp_factor(astterm)) return 0;
+
+	/* keep doing all the multiplicitive arithmetic */
+	while (pcp_accept(multsym) || pcp_accept(idivsym) || pcp_accept(divsym) || pcp_accept(andsym)) {
+		astmult = AST_initialize(multasm);
+		astmult->sym = lasttoken->sym;
+		AST_addchild(astterm, astmult);
+
+		if (!pcp_factor(astterm)) return 0;
 	}
 
 	return 1;
 }
 
 int
-pcp_simple_expression() {
+pcp_simple_expression(AST *ast) {
+	AST *astsimexpr;
+	AST *astaddasm;
+
 	printf("## ENTERED pcp_simple_expression ##\n");
 
-	if (!pcp_term()) return 0;
+	astsimexpr = AST_initialize(simexprasm);
+	AST_addchild(ast, astsimexpr);
 
-	while (nexttoken->sym == addsym || nexttoken->sym == minussym || nexttoken->sym == orsym) {
-		NEXTTOKEN();
-		NEXTTOKEN();
-		if (!pcp_term()) return 0;
+	if (!pcp_term(astsimexpr)) return 0;
+
+	/* keep doing all the additional arithemetic */
+	while (pcp_accept(addsym) || pcp_accept(minussym) || pcp_accept(orsym)) {
+		astaddasm = AST_initialize(addasm);
+		astaddasm->sym = lasttoken->sym;
+		AST_addchild(astsimexpr, astaddasm);
+
+		if (!pcp_term(astsimexpr)) return 0;
 	}
 
+	/* skip next token */
+	/*NEXTTOKEN();*/
 	return 1;
 }
 
 int
-pcp_expression() {
+pcp_expression(AST *ast) {
+	AST *astexpr;
+	AST *astrel;
+
 	printf("## ENTERED pcp_expression ##\n");
 
-	if (!pcp_simple_expression()) return 0;
+	astexpr = AST_initialize(exprasm);
+	AST_addchild(ast, astexpr);
 
-	if (nexttoken->sym == eqsym || nexttoken->sym == neqsym || nexttoken->sym == ltsym || nexttoken->sym == ltesym || nexttoken->sym == gtesym || nexttoken->sym == gtsym) {
-		NEXTTOKEN();
-		NEXTTOKEN();
-		return pcp_simple_expression();
+	if (!pcp_simple_expression(astexpr)) return 0;
+
+	/* see if this is relational */
+	if (pcp_accept(eqsym) || pcp_accept(neqsym) || pcp_accept(ltsym) || pcp_accept(ltesym) || pcp_accept(gtesym) || pcp_accept(gtsym)) {
+		astrel = AST_initialize(relasm);
+		astrel->sym = lasttoken->sym;
+		AST_addchild(astexpr, astrel);
+		return pcp_simple_expression(astexpr);
 	}
 
 	return 1;
@@ -242,245 +370,270 @@ pcp_for() {
 }*/
 
 int
-pcp_while() {
+pcp_while(AST *ast) {
+	AST *astwhile;
+
 	printf("## ENTERED pcp_while ##\n");
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	astwhile = AST_initialize(whileasm);
+	AST_addchild(ast, astwhile);
 
-	NEXTTOKEN();
-	if (token->sym != dosym) return pcp_error("Expected 'do'.");
+	if (!pcp_expression(astwhile)) return 0;
 
-	NEXTTOKEN();
-	return pcp_statement_part();
+	EXPECT(dosym);
+
+	return pcp_statement_part(astwhile);
 }
 
 int
-pcp_if() {
+pcp_if(AST *ast) {
+	AST *astif;
+
 	printf("## ENTERED pcp_if ##\n");
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	astif = AST_initialize(ifasm);
+	AST_addchild(ast, astif);
 
-	NEXTTOKEN();
-	if (token->sym != thensym) return pcp_error("Expected 'then'.");
+	if (!pcp_expression(astif)) return 0;
 
-	NEXTTOKEN();
-	if (!pcp_statement_part()) return 0;
+	EXPECT(thensym);
 
-	if (nexttoken->sym == elsesym) {
-		NEXTTOKEN();
-		NEXTTOKEN();
-		return pcp_statement_part();
+	if (!pcp_statement_part(astif)) return 0;
+
+	if (pcp_accept(elsesym)) {
+		return pcp_statement_part(astif);
 	}
 
 	return 1;
 }
 
 int
-pcp_write() {
+pcp_write(AST *ast) {
+	AST *astwrite;
+
 	printf("## ENTERED pcp_write ##\n");
-	NEXTTOKEN();
-	if (token->sym != lparensym) return pcp_error("Expected '('.");
+	
+	EXPECT(lparensym);
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	astwrite = AST_initialize(writeasm);
+	AST_addchild(ast, astwrite);
+	
+	if (!pcp_expression(astwrite)) return 0;
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
-		if (!pcp_expression()) return 0;
-		NEXTTOKEN();
+	while (pcp_accept(commasym)) {
+		if (!pcp_expression(astwrite)) return 0;
 	}
 
-	if (token->sym != rparensym) return pcp_error("Expected ')'.");
+	EXPECT(rparensym);
 	return 1;
 }
 
 int
-pcp_read() {
+pcp_read(AST *ast) {
+	AST *astread;
+	AST *astcur;
+
 	printf("## ENTERED pcp_read ##\n");
-	NEXTTOKEN();
-	if (token->sym != lparensym) return pcp_error("Expected '('.");
+	
+	EXPECT(lparensym);
+	EXPECT(idsym);
 
-	NEXTTOKEN();
-	if (token->sym != idsym) return pcp_error("Expected ID.");
+	astread = AST_initialize(readasm);
+	AST_addchild(ast, astread);
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
-		if (token->sym != idsym) return pcp_error("Expected ID.");
-		NEXTTOKEN();
+	astcur = AST_initialize(idasm);
+	astcur->name = strdup(lasttoken->val.id);
+	AST_addchild(astread, astcur);
+
+	while (pcp_accept(commasym)) {
+		EXPECT(idsym);
+		astcur = AST_initialize(idasm);
+		astcur->name = strdup(lasttoken->val.id);
+		AST_addchild(astread, astcur);
 	}
 
-	if (token->sym != rparensym) return pcp_error("Expected ')'.");
+	EXPECT(rparensym);
 	return 1;
 }
 
 int
-pcp_application(pctoken *ltoken) {
+pcp_application(AST *ast, pctoken *ltoken) {
+	AST *astfunccall;
 	symentry *entry = pclookupsym(ltoken->val.id);
 	int params = 1;
 
 	printf("## ENTERED pcp_application ##\n");
 
 	if (!entry || entry->type != functiontype) {
-		return pcp_error("Undefined ID or unexpected type.");
+		return pcerror("Undefined ID or unexpected type.\n");
 	}
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	astfunccall = AST_initialize(funccallasm);
+	astfunccall->name = strdup(ltoken->val.id);
+	AST_addchild(ast, astfunccall);
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
+	if (!pcp_expression(astfunccall)) return 0;
 
-		if (!pcp_expression()) return 0;
+	while (pcp_accept(commasym)) {
+		if (!pcp_expression(astfunccall)) return 0;
 		++params;
-
-		NEXTTOKEN();
 	}
 
-	if (token->sym != rparensym) return pcp_error("Expected ')'.");
+	EXPECT(rparensym);
 	return 1;
 }
 
 int
-pcp_procedure_call(pctoken *ltoken) {
+pcp_procedure_call(AST *ast, pctoken *ltoken) {
+	AST *astproccall;
 	symentry *entry = pclookupsym(ltoken->val.id);
 	int params = 1;
 
 	printf("## ENTERED pcp_procedure_call ##\n");
 
 	if (!entry || entry->type != proceduretype) {
-		return pcp_error("Undefined ID or unexpected type.");
+		return pcerror("Undefined ID or unexpected type.\n");
 	}
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	astproccall = AST_initialize(proccallasm);
+	astproccall->name = strdup(ltoken->val.id);
+	AST_addchild(ast, astproccall);
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
+	if (!pcp_expression(astproccall)) return 0;
 
-		if (!pcp_expression()) return 0;
+	while (pcp_accept(commasym)) {
+		if (!pcp_expression(astproccall)) return 0;
 		++params;
-
-		NEXTTOKEN();
 	}
 
-	if (token->sym != rparensym) return pcp_error("Expected ')'.");
+	EXPECT(rparensym);
 	return 1;
 }
 
 int
-pcp_procedure_call_or_application(pctoken *ltoken) {
-	return pcp_procedure_call(ltoken) || pcp_application(ltoken);
+pcp_procedure_call_or_application(AST *ast, pctoken *ltoken) {
+	return pcp_procedure_call(ast, ltoken) || pcp_application(ast, ltoken);
 }
 
 int
-pcp_assign(pctoken *ltoken) {
+pcp_assign(AST *ast, pctoken *ltoken) {
+	AST *astassign;
+	AST *astlval;
 	symentry *entry = pclookupsym(ltoken->val.id);
 
 	printf("## ENTERED pcp_assign ##\n");
 
 	if (!entry || (entry->type != integertype && entry->type != realtype && entry->type != chartype && entry->type != stringtype)) {
-		return pcp_error("Undefined ID or unexpected type.");
+		return pcerror("Undefined ID or unexpected type.\n");
 	}
 
-	NEXTTOKEN();
-	return pcp_expression();
+	astassign = AST_initialize(assignasm);
+	astassign->name = strdup(ltoken->val.id);
+	AST_addchild(ast, astassign);
+
+	astlval = AST_initialize(idasm);
+	astlval->name = strdup(ltoken->val.id);
+	AST_addchild(astassign, astlval);
+
+	return pcp_expression(astassign);
 }
 
 int
-pcp_statement() {
+pcp_statement(AST *ast) {
 	int success = 0;
 
 	printf("## ENTERED pcp_statement ##\n");
 
 	/* procedure/function call or assignment */
-	if (token->sym == idsym) {
-		pctoken *oldtoken = token;
+	if (pcp_accept(idsym)) {
+		pctoken *oldtoken = lasttoken;
 
-		NEXTTOKEN();
-		if (token->sym == lparensym) success = pcp_procedure_call_or_application(oldtoken);
-		else if (token->sym == assignsym) success = pcp_assign(oldtoken);
-		else if (token->sym == lbracksym) return pcp_error("Arrays not yet supported.");
-		else return pcp_error("Unexpected symbol.");
-	} else if (token->sym == readsym || token->sym == readlnsym) {
-		success = pcp_read();
-	} else if (token->sym == writesym || token->sym == writelnsym) {
-		success = pcp_write();
-	} else if (token->sym == ifsym) {
-		success = pcp_if();
-	} else if (token->sym == whilesym) {
-		success = pcp_while();
-	} /*else if (token->sym == forsym) {
+		if (pcp_accept(lparensym)) success = pcp_procedure_call_or_application(ast, oldtoken);
+		else if (pcp_accept(assignsym)) success = pcp_assign(ast, oldtoken);
+		else if (pcp_accept(lbracksym)) return pcerror("Arrays not yet supported.\n");
+		else return pcerror("Unexpected symbol.\n");
+	} else if (pcp_accept(readsym) || pcp_accept(readlnsym)) {
+		success = pcp_read(ast);
+	} else if (pcp_accept(writesym) || pcp_accept(writelnsym)) {
+		success = pcp_write(ast);
+	} else if (pcp_accept(ifsym)) {
+		success = pcp_if(ast);
+	} else if (pcp_accept(whilesym)) {
+		success = pcp_while(ast);
+	} /*else if (pcp_accept(forsym)) {
 		success = pcp_for();
-	}*/ else if (token->sym == beginsym) {
-		success = pcp_statement_part();
+	}*/ else if (pcp_accept(beginsym)) {
+		success = pcp_statement_part(ast);
 	} else {
-		return pcp_error("Unexpected statement.");
+		return pcerror("Unexpected statement.\n");
 	}
 
 	if (!success) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'.");
+	/*NEXTTOKEN();*/
+	EXPECT(semicolonsym);
 
 	return 1;
 }
 
 int
-pcp_statement_part() {
+pcp_statement_part(AST *ast) {
+	AST *aststatement;
+
 	printf("## ENTERING pcp_statement_part ##\n");
 
-	if (token->sym != beginsym) return pcp_error("Expected 'BEGIN'.");
+	EXPECT(beginsym);
+
+	aststatement = AST_initialize(statementasm);
+	AST_addchild(ast, aststatement);
 
 	/* go through all the statements until end */
-	NEXTTOKEN();
-	while (token->sym != endsym) {
-		if (!pcp_statement()) return 0;
-		NEXTTOKEN();
+	while (!pcp_accept(endsym)) {
+		if (!pcp_statement(aststatement)) return 0;
 	}
 
 	return 1;
 }
 
 int
-pcp_formal_parameters() {
+pcp_formal_parameters(AST *ast) {
 	pctokenlist tokens = {NULL, NULL};
 	pctokenlist *tail = NULL;
 	pctokenlist *cur;
 	pctoken *val;
 	symtype type;
+	AST *astparam;
+	AST *astcur;
 
 	printf("## ENTERING pcp_formal_parameters ##\n");
 
-	if (token->sym != idsym) return pcp_error("Expected ID.");
-	tokens.token = token;
+	EXPECT(idsym);
+	tokens.token = lasttoken;
 	tail = &tokens;
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
+	astparam = AST_initialize(paramasm);
+	AST_addchild(ast, astparam);
 
-		if (token->sym != idsym) return pcp_error("Expected ID.");
-		ADDTOKEN(tail, token);
-
-		NEXTTOKEN();
+	while (pcp_accept(commasym)) {
+		EXPECT(idsym);
+		ADDTOKEN(tail, lasttoken);
 	}
 
-	if (token->sym != colonsym) return pcp_error("Expected ':'.");
-
-	NEXTTOKEN();
+	EXPECT(colonsym);
+	
 	val = token;
-	if (!sym_to_type(val->sym, &type)) return 0;	
+	if (!sym_to_type(val->sym, &type)) return 0;
+	NEXTTOKEN();	
 
 	/* add all the id's to the symbol table */
 	cur = &tokens;
 	while (cur != NULL) {
 		if (!pcaddsym(cur->token->val.id, type, (symval)0, cur->token->lineno)) return 0;
+
+		astcur = AST_initialize(idasm);
+		astcur->name = strdup(cur->token->val.id);
+		AST_addchild(astparam, astcur);
+
 		tail = cur;
 		cur = cur->next;
 		if (tail != &tokens) free(tail);
@@ -490,232 +643,242 @@ pcp_formal_parameters() {
 }
 
 int
-pcp_function_declaration() {
+pcp_function_declaration(AST *ast) {
 	symtype type;
+	AST *astfunc;
 
 	printf("## ENTERING pcp_function_declaration ##\n");
 
 	/* enter our new scope for the function */
-	if (token->sym != idsym) return pcp_error("Expected ID.");
-	if (!pcenterscope(token->val.id, functiontype, token->lineno)) return 0;
+	EXPECT(idsym);
+	if (!pcenterscope(lasttoken->val.id, functiontype, lasttoken->lineno)) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != lparensym) return pcp_error("Expected '('");
+	astfunc = AST_initialize(functionasm);
+	astfunc->name = strdup(lasttoken->val.id);
+	AST_addchild(ast, astfunc);
 
-	NEXTTOKEN();
-	if (!pcp_formal_parameters()) return 0;
+	EXPECT(lparensym);
+	if (!pcp_formal_parameters(astfunc)) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != rparensym) return pcp_error("Expected ')'");
+	EXPECT(rparensym);
+	EXPECT(colonsym);
 
-	NEXTTOKEN();
-	if (token->sym != colonsym) return pcp_error("Expected ':'");
-
-	NEXTTOKEN();
 	if (!sym_to_type(token->sym, &type)) return 0;
 
 	/* update our return type */
 	/*entry->returntype = type;*/
 
 	NEXTTOKEN();
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'");
+	EXPECT(semicolonsym);
 
-	NEXTTOKEN();
-	if (!pcp_block()) return 0;
+	if (!pcp_block(astfunc)) return 0;
 
 	/* leave the function scope */
 	return pcleavescope();
 }
 
 int
-pcp_procedure_declaration() {
+pcp_procedure_declaration(AST *ast) {
+	AST *astproc;
+
 	printf("## ENTERING pcp_procedure_declaration ##\n");
 
 	/* create our new scope for the new variables */
-	if (token->sym != idsym) return pcp_error("Expected ID.");
-	if (!pcenterscope(token->val.id, proceduretype, token->lineno)) return 0;
+	EXPECT(idsym);
+	if (!pcenterscope(lasttoken->val.id, proceduretype, lasttoken->lineno)) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != lparensym) return pcp_error("Expected '('");
+	astproc = AST_initialize(procedureasm);
+	astproc->name = strdup(lasttoken->val.id);
+	AST_addchild(ast, astproc);
 
-	NEXTTOKEN();
-	if (!pcp_formal_parameters()) return 0;
+	EXPECT(lparensym);
+	if (!pcp_formal_parameters(astproc)) return 0;
 
-	NEXTTOKEN();
-	if (token->sym != rparensym) return pcp_error("Expected ')'");
+	EXPECT(rparensym);
+	EXPECT(semicolonsym);
 
-	NEXTTOKEN();
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'");
-
-	NEXTTOKEN();
-	if (!pcp_block()) return 0;
+	if (!pcp_block(astproc)) return 0;
 
 	/* leave the procedure scope */
 	return pcleavescope();
 }
 
 int
-pcp_procedure_and_function_definition_part() {
+pcp_procedure_and_function_definition_part(AST *ast) {
 	printf("## ENTERING pcp_procedure_and_function_definition_part ##\n");
 
-	if (token->sym == proceduresym) {
-		NEXTTOKEN();
-		pcp_procedure_declaration();
-	} else if (token->sym == functionsym) {
-		NEXTTOKEN();
-		pcp_function_declaration();
+	if (pcp_accept(proceduresym)) {
+		pcp_procedure_declaration(ast);
+	} else if (pcp_accept(functionsym)) {
+		pcp_function_declaration(ast);
 	} else return 1;
 
-	NEXTTOKEN();
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'.");
+	/*NEXTTOKEN();*/
+	EXPECT(semicolonsym);
 
-	NEXTTOKEN();
-	return pcp_procedure_and_function_definition_part();
+	return pcp_procedure_and_function_definition_part(ast);
 }
 
 int
-pcp_variable_definition() {
+pcp_variable_definition(AST *ast) {
 	pctokenlist tokens = {NULL, NULL};
 	pctokenlist *tail = NULL;
 	pctokenlist *cur;
 	pctoken *val;
 	symtype type;
+	AST *astcur;
 
 	printf("## ENTERING pcp_variable_definition ##\n");
 
-	if (token->sym != idsym) return pcp_error("Expected ID.");
-	tokens.token = token;
+	EXPECT(idsym);
+	tokens.token = lasttoken;
 	tail = &tokens;
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
-
+	while (pcp_accept(commasym)) {
 		/* update the linked list */
-		if (token->sym != idsym) return pcp_error("Expected ID.");
-		ADDTOKEN(tail, token);
-
-		NEXTTOKEN();
+		EXPECT(idsym);
+		ADDTOKEN(tail, lasttoken);
 	}
 
-	if (token->sym != colonsym) return pcp_error("Expected ':'.");
+	EXPECT(colonsym);
 
-	NEXTTOKEN();
 	val = token;
 	if (!sym_to_type(val->sym, &type)) return 0;	
+	NEXTTOKEN();
 
 	/* add all the id's to the symbol table */
 	cur = &tokens;
 	while (cur != NULL) {
 		if (!pcaddsym(cur->token->val.id, type, (symval)0, cur->token->lineno)) return 0;
+
+		/* add to the parse tree */
+		astcur = AST_initialize(idasm);
+		astcur->name = strdup(cur->token->val.id);
+		AST_addchild(ast, astcur);
+
 		tail = cur;
 		cur = cur->next;
 		if (tail != &tokens) free(tail);
 	}
 
-	NEXTTOKEN();
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'.");
-
-	NEXTTOKEN();
-	if (token->sym == idsym) return pcp_variable_definition();
+	EXPECT(semicolonsym);
+	if (token->sym == idsym) return pcp_variable_definition(ast);
 
 	return 1;	
 }
 
 int
-pcp_variable_definition_part() {
+pcp_variable_definition_part(AST *ast) {
+	AST *astvar;
 	printf("## ENTERING pcp_variable_definition_part ##\n");
-	if (token->sym != varsym) return 1;
-	NEXTTOKEN();
 
-	return pcp_variable_definition();
+	if (!pcp_accept(varsym)) return 1;
+
+	astvar = AST_initialize(varasm);
+	AST_addchild(ast, astvar);
+
+	return pcp_variable_definition(astvar);
 }
 
 int
-pcp_constant_definition() {
+pcp_constant_definition(AST *ast) {
 	pctokenlist tokens = {NULL, NULL};
 	pctokenlist *tail = NULL;
 	pctokenlist *cur;
 	pctoken *val;
 	symtype type;
+	AST *astcur;
 
 	printf("## ENTERING pcp_constant_definition ##\n");
 
-	if (token->sym != idsym) return pcp_error("Expected ID.");
-	tokens.token = token;
+	EXPECT(idsym);
+	tokens.token = lasttoken;
 	tail = &tokens;
 
-	NEXTTOKEN();
-	while (token->sym == commasym) {
-		NEXTTOKEN();
-
+	while (pcp_accept(commasym)) {
 		/* update the linked list */
-		if (token->sym != idsym) return pcp_error("Expected ID.");
-		ADDTOKEN(tail, token);
-
-		NEXTTOKEN();
+		EXPECT(idsym);
+		ADDTOKEN(tail, lasttoken);
 	}
 
-	if (token->sym != eqsym) return pcp_error("Expected '='.");
+	EXPECT(eqsym);
 
-	NEXTTOKEN();
 	if (!(val = pcp_const_no_id(&type))) return 0;
+	NEXTTOKEN();
 
 	/* add all the id's to the symbol table */
 	cur = &tokens;
 	while (cur != NULL) {
+		/* add to the symbol table */
 		if (!pcaddsym(cur->token->val.id, type, val->val, cur->token->lineno)) return 0;
+
+		/* add to the parse tree */
+		astcur = AST_initialize(idasm);
+		astcur->name = strdup(cur->token->val.id);
+		AST_addchild(ast, astcur);
+
+		/* free and go to the next */
 		tail = cur;
 		cur = cur->next;
 		if (tail != &tokens) free(tail);
 	}
 
-	NEXTTOKEN();
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'.");
-
-	NEXTTOKEN();
-	if (token->sym == idsym) return pcp_constant_definition();
+	EXPECT(semicolonsym);
+	if (token->sym == idsym) return pcp_constant_definition(ast);
 
 	return 1;
 }
 
 int
-pcp_constant_definition_part() {
-	printf("## ENTERING pcp_constant_definition_part ##\n");
-	if (token->sym != constsym) return 1;
-	NEXTTOKEN();
+pcp_constant_definition_part(AST *ast) {
+	AST *astconst;
 
-	return pcp_constant_definition();
+	printf("## ENTERING pcp_constant_definition_part ##\n");
+
+	if (!pcp_accept(constsym)) return 1;
+
+	astconst = AST_initialize(constasm);
+	AST_addchild(ast, astconst);
+
+	return pcp_constant_definition(astconst);
 }
 
 int
-pcp_block() {
-	if (!pcp_constant_definition_part()) return 0;
+pcp_block(AST *ast) {
+	if (!pcp_constant_definition_part(ast)) return 0;
 	/*if (!pcp_type_definition_part()) return 0;*/
-	if (!pcp_variable_definition_part()) return 0;
-	if (!pcp_procedure_and_function_definition_part()) return 0;
-	if (!pcp_statement_part()) return 0;
+	if (!pcp_variable_definition_part(ast)) return 0;
+	if (!pcp_procedure_and_function_definition_part(ast)) return 0;
+	if (!pcp_statement_part(ast)) return 0;
 
 	return 1;
 }
 
 int
 pcp_program() {
-	if (token->sym != programsym) return pcp_error("Must start with 'program'.");
-	NEXTTOKEN();
+	EXPECT(programsym);
 
 	/* add to our symbol table */
-	if (token->sym != idsym) return pcp_error("Expected ID.");
-	ADDSYM(token->val.id, programtype, token);
-	NEXTTOKEN();
+	EXPECT(idsym);
+	ADDSYM(lasttoken->val.id, programtype, lasttoken);
 
-	if (token->sym != semicolonsym) return pcp_error("Expected ';'");
-	NEXTTOKEN();
+	/* add to our tree */
+	astroot = AST_initialize(programasm);
+	astroot->name = strdup(lasttoken->val.id);
 
-	if (!pcp_block()) return 0;
+	EXPECT(semicolonsym);
 
-	NEXTTOKEN();
-	if (token->sym != dotsym) return pcp_error("Must end program with '.'.");
+	if (!pcp_block(astroot)) return 0;
+
+	/*NEXTTOKEN();*/
+	if (token->sym != dotsym) {
+		return pcerror("[%u] pcp_expect: Unexpected symbol: %s vs %s\n", token->lineno, token->val, pcsymstr[dotsym]);
+	}
+
+	if (pcgettoken(fp) != NULL) {
+		pcerror("Expected end-of-file, but there is still content.");
+		return 0;
+	}
 
 	return 1;
 }
@@ -728,7 +891,7 @@ pcp_start() {
 int
 pcparse(FILE *ifp) {
 	fp = ifp;
-	nexttoken = pcgettoken(fp);
+	lasttoken = token = nexttoken = pcgettoken(fp);
 	NEXTTOKEN();
 
 	return pcp_start();

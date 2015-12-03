@@ -5,7 +5,7 @@
 
 unsigned pclineno = 1;		/* current line number */
 
-void
+int
 pcerror(const char *format, ...) {
 	va_list args;
 
@@ -13,6 +13,7 @@ pcerror(const char *format, ...) {
 	va_start(args, format);
 	vfprintf(stderr, format, args);
 	va_end(args);
+	return 0;
 }
 
 char
