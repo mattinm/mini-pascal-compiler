@@ -35,6 +35,13 @@ typedef enum symtype {
 	numsymtypes
 } symtype;
 
+/* Parameters for functions and procedures. */
+struct symentry;
+typedef struct symparam {
+	struct symentry *entry;
+	struct symparam *next;
+} symparam;
+
 /*
 Array of string representation for each symtype.
 KEEP UP TO DATE WITH symtype enum.
@@ -50,17 +57,20 @@ typedef struct symentry {
 	symtype 	type;	/* type of the lexeme */
 	symval		val;	/* value of the lexeme */
 	unsigned	lineno;	/* line the lexeme was declared on */
+	int 		bconst;	/* whether or not it's constant */
 
 	struct symtab 	*tab;		/* symbol table for this entry (procedures and functions) */
 	symtype 		returntype; /* return type for functions */
+	struct symparam *params;	/* paramaters */
 
 	/* link to the next entry */
 	struct symentry *next;
 } symentry;
 
 struct symtab {
-	struct symtab 		*parent;	/* parent symtab */
-	symentry 			*entries;	/* linked list of entries */
+	struct symtab 	*parent;	/* parent symtab */
+	symentry 		*block;		/* the block entry that starts this */
+	symentry 		*entries;	/* linked list of entries */
 };
 
 typedef struct symtab symtab;
@@ -78,14 +88,31 @@ Prints the symbol table.
 void pcprintsymtab();
 
 /*
+Cleans up the symbol table.
+*/
+void pccleanupsymtab();
+
+/*
 Adds a value to the symbol table.
+
+@param name the name of the lexeme
+@param type the type of the lexeme
+@param val the value of the lexeme
+@param bconst 1 if constant, 0 otherwise
+@param lineno the line the lexeme is declared on
+@return 1 on success; 0 otherwise
+*/
+symentry *pcaddsym(const char *name, symtype type, symval val, int bconst, unsigned lineno);
+
+/*
+Adds a variable to the symbol table as a parameter.
 
 @param name the name of the lexeme
 @param type the type of the lexeme
 @param lineno the line the lexeme is declared on
 @return 1 on success; 0 otherwise
 */
-symentry *pcaddsym(const char *name, symtype type, symval val, unsigned lineno);
+symentry *pcaddparam(const char *name, symtype type, unsigned lineno);
 
 /*
 Lookup a symbol from the current table.

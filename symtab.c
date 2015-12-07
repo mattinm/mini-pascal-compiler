@@ -80,53 +80,54 @@ int pcintializesymtab() {
 	current = root;
 	current->parent		= NULL;
 	current->entries 	= NULL;
+	current->block 		= NULL;
 
 	val.ival = 0;
 
 	/* this is expanded from scanner.c -> pcgetkeyword() */
 	/* TODO: make a pckeywords struct array */
 	
-	pcaddsym("div", keywordtype, (symval)"div", 0);
-	pcaddsym("mod", keywordtype, (symval)"mod", 0);
+	pcaddsym("div", keywordtype, (symval)"div", 1, 0);
+	pcaddsym("mod", keywordtype, (symval)"mod", 1, 0);
 
-	pcaddsym("program", keywordtype, (symval)"program", 0);
-	pcaddsym("procedure", keywordtype, (symval)"procedure", 0);
-	pcaddsym("function", keywordtype, (symval)"function", 0);
-	pcaddsym("begin", keywordtype, (symval)"begin", 0);
-	pcaddsym("end", keywordtype, (symval)"end", 0);
+	pcaddsym("program", keywordtype, (symval)"program", 1, 0);
+	pcaddsym("procedure", keywordtype, (symval)"procedure", 1, 0);
+	pcaddsym("function", keywordtype, (symval)"function", 1, 0);
+	pcaddsym("begin", keywordtype, (symval)"begin", 1, 0);
+	pcaddsym("end", keywordtype, (symval)"end", 1, 0);
 
-	pcaddsym("and", keywordtype, (symval)"and", 0);
-	pcaddsym("or", keywordtype, (symval)"or", 0);
-	pcaddsym("not", keywordtype, (symval)"not", 0);
+	pcaddsym("and", keywordtype, (symval)"and", 1, 0);
+	pcaddsym("or", keywordtype, (symval)"or", 1, 0);
+	pcaddsym("not", keywordtype, (symval)"not", 1, 0);
 
-	pcaddsym("if", keywordtype, (symval)"if", 0);
-	pcaddsym("else", keywordtype, (symval)"else", 0);
-	pcaddsym("then", keywordtype, (symval)"then", 0);
-	pcaddsym("do", keywordtype, (symval)"do", 0);
-	pcaddsym("while", keywordtype, (symval)"while", 0);
+	pcaddsym("if", keywordtype, (symval)"if", 1, 0);
+	pcaddsym("else", keywordtype, (symval)"else", 1, 0);
+	pcaddsym("then", keywordtype, (symval)"then", 1, 0);
+	pcaddsym("do", keywordtype, (symval)"do", 1, 0);
+	pcaddsym("while", keywordtype, (symval)"while", 1, 0);
 
-	pcaddsym("array", keywordtype, (symval)"array", 0);
-	pcaddsym("of", keywordtype, (symval)"of", 0);
-	pcaddsym("char", keywordtype, (symval)"char", 0);
-	pcaddsym("string", keywordtype, (symval)"string", 0);
-	pcaddsym("integer", keywordtype, (symval)"integer", 0);
-	pcaddsym("real", keywordtype, (symval)"real", 0);
-	pcaddsym("var", keywordtype, (symval)"var", 0);
-	pcaddsym("const", keywordtype, (symval)"const", 0);
+	pcaddsym("array", keywordtype, (symval)"array", 1, 0);
+	pcaddsym("of", keywordtype, (symval)"of", 1, 0);
+	pcaddsym("char", keywordtype, (symval)"char", 1, 0);
+	pcaddsym("string", keywordtype, (symval)"string", 1, 0);
+	pcaddsym("integer", keywordtype, (symval)"integer", 1, 0);
+	pcaddsym("real", keywordtype, (symval)"real", 1, 0);
+	pcaddsym("var", keywordtype, (symval)"var", 1, 0);
+	pcaddsym("const", keywordtype, (symval)"const", 1, 0);
 
-	pcaddsym("chr", keywordtype, (symval)"chr", 0);
-	pcaddsym("ord", keywordtype, (symval)"ord", 0);
-	pcaddsym("read", keywordtype, (symval)"read", 0);
-	pcaddsym("readln", keywordtype, (symval)"readln", 0);
-	pcaddsym("write", keywordtype, (symval)"write", 0);
-	pcaddsym("writeln", keywordtype, (symval)"writeln", 0);
+	pcaddsym("chr", keywordtype, (symval)"chr", 1, 0);
+	pcaddsym("ord", keywordtype, (symval)"ord", 1, 0);
+	pcaddsym("read", keywordtype, (symval)"read", 1, 0);
+	pcaddsym("readln", keywordtype, (symval)"readln", 1, 0);
+	pcaddsym("write", keywordtype, (symval)"write", 1, 0);
+	pcaddsym("writeln", keywordtype, (symval)"writeln", 1, 0);
 
 	return 1;
 }
 
 void pcprintsymtabnode(symtab *node, unsigned depth) {
 	symentry *entry;
-	char tabs[20], *c;
+	char tabs[21], *c;
 	int i;
 
 	if (!node) return;
@@ -141,14 +142,21 @@ void pcprintsymtabnode(symtab *node, unsigned depth) {
 	/* print self first */
 	entry = node->entries;
 	while (entry) {
-		if (entry->type == integertype) {
-			printf("%s%s (%s) : %d : %d\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.ival);
-		} else if (entry->type == realtype) {
-			printf("%s%s (%s) : %d : %f\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.rval);
-		} else if (entry->type == chartype) {
-			printf("%s%s (%s) : %d : %c\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.cval);
-		} else {
-			printf("%s%s (%s) : %d : %s\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.str);
+		switch (entry->type) {
+			case integertype:
+				printf("%s%s (%s) : %d : %d\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.ival);
+				break;
+			case realtype:
+				printf("%s%s (%s) : %d : %f\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.rval);
+				break;
+			case chartype:
+				printf("%s%s (%s) : %d : %c\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.cval);
+				break;
+			case stringtype:
+				printf("%s%s (%s) : %d : %s\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.str);
+				break;
+			default:
+				printf("%s%s (%s) : %d : NULL\n", tabs, entry->name, symtypestr[entry->type], entry->lineno);
 		}
 
 		/* print the symbol table for the child, if it exists */
@@ -164,11 +172,41 @@ void pcprintsymtab() {
 	pcprintsymtabnode(root, 0);
 }
 
-symentry *pcaddsym(const char *name, symtype type, symval val, unsigned lineno) {
+void pccleanupsymtabnode(symtab **tab) {
+	symentry *cur;
+
+	cur = (*tab)->entries;
+	while (cur) {
+		/* cleanup children fist */
+		if (cur->tab) {
+			pccleanupsymtabnode(&(cur->tab));
+			cur->tab = NULL;
+		}
+
+		/* cleanup name */
+		free((void*)(cur->name)); cur->name = NULL;
+
+		/* next */
+		cur = cur->next;
+	}
+
+	/* destroy our symtab */
+	free(*tab);
+	(*tab) = NULL;
+}
+
+void pccleanupsymtab() {
+	pccleanupsymtabnode(&root);
+}
+
+symentry *pcaddsym(const char *name, symtype type, symval val, int bconst, unsigned lineno) {
 	symentry *entry;
 
 	/* make sure we have a root */
-	if (!current) return NULL;
+	if (!current) {
+		pcerror("{%d} ERR: No symbol table defined.\n");
+		return NULL;
+	}
 
 	/* make sure it doesn't yet exist in this scope */
 	if (pclookupsym_internal(name, 1)) {
@@ -181,15 +219,52 @@ symentry *pcaddsym(const char *name, symtype type, symval val, unsigned lineno) 
 	entry->name 		= strdup(name);
 	entry->type 		= type;
 	entry->val 			= val;
+	entry->bconst 		= bconst;
 	entry->lineno		= lineno;
 	entry->tab 			= NULL;
+	entry->params		= NULL;
 	entry->returntype 	= notype;
 
-	/* add to the head of the entries */
+	/* add to the tail of the entries */
 	entry->next			= current->entries;
 	current->entries	= entry;
 	return entry;
 }
+
+symentry *pcaddparam(const char *name, symtype type, unsigned lineno) {
+	symentry *entry;
+	symentry *func;
+	symparam *param;
+	symparam *cur;
+
+	/* make sure we're in a function/procedure */
+	if (!(func = current->block) || (func->type != proceduretype && func->type != functiontype)) {
+		pcerror("{%d} ERR: Unable to determine function/procedure.\n", lineno);
+		return NULL;
+	}
+
+	/* add this to the symbol table */
+	if (!(entry = pcaddsym(name, type, (symval)0, 0, lineno))) return NULL;
+
+	/* update the params with the new param */
+	param = malloc(sizeof(*param));
+	param->entry = entry;
+	param->next = NULL;
+
+	/* add to the root if there isn't one here yet */
+	if (!(func->params)) {
+		func->params = param;
+		return entry;
+	}
+
+	/* add to the tail */
+	cur = func->params;
+	while (cur->next) cur = cur->next;
+	cur->next = param;
+
+	return entry;
+}
+
 
 symentry *pclookupsym(const char *name) {
 	return pclookupsym_internal(name, 0);
@@ -197,12 +272,14 @@ symentry *pclookupsym(const char *name) {
 
 symentry *pcenterscope(const char *name, symtype type, unsigned lineno) {
 	symentry *entry;
-	if (!(entry = pcaddsym(name, type, (symval)0, lineno))) return NULL;
+
+	if (!(entry = pcaddsym(name, type, (symval)0, 0, lineno))) return NULL;
 
 	/* create our table and make it the current, while updating it's parent */
 	if (!(entry->tab = malloc(sizeof(*(entry->tab))))) return NULL;
 	entry->tab->parent	= current;
 	entry->tab->entries = NULL;
+	entry->tab->block = entry;
 	current = entry->tab;
 
 	return entry;

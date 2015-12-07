@@ -18,7 +18,6 @@ pctoken *token = NULL;
 pctoken *nexttoken = NULL;
 
 #define NEXTTOKEN() if (!pcp_next()) return 0
-#define ADDSYM(NAME, TYPE, TOKEN) if (!pcaddsym(NAME, TYPE, (TOKEN)->val, (TOKEN)->lineno)) return 0
 #define ADDTOKEN(TAIL, TOKEN) if (!(TAIL = tokenlist_add(TAIL, TOKEN))) return 0
 #define EXPECT(SYM) if (!pcp_expect(SYM)) return 0
 #define EXPECT2(SYM1, SYM2) if (!pcp_expect2(SYM1, SYM2)) return 0
@@ -628,7 +627,7 @@ pcp_formal_parameters(AST *ast) {
 	/* add all the id's to the symbol table */
 	cur = &tokens;
 	while (cur != NULL) {
-		if (!pcaddsym(cur->token->val.id, type, (symval)0, cur->token->lineno)) return 0;
+		if (!pcaddparam(cur->token->val.id, type, cur->token->lineno)) return 0;
 
 		astcur = AST_initialize(idasm);
 		astcur->name = strdup(cur->token->val.id);
@@ -749,7 +748,7 @@ pcp_variable_definition(AST *ast) {
 	/* add all the id's to the symbol table */
 	cur = &tokens;
 	while (cur != NULL) {
-		if (!pcaddsym(cur->token->val.id, type, (symval)0, cur->token->lineno)) return 0;
+		if (!pcaddsym(cur->token->val.id, type, (symval)0, 0, cur->token->lineno)) return 0;
 
 		/* add to the parse tree */
 		astcur = AST_initialize(idasm);
@@ -810,7 +809,7 @@ pcp_constant_definition(AST *ast) {
 	cur = &tokens;
 	while (cur != NULL) {
 		/* add to the symbol table */
-		if (!pcaddsym(cur->token->val.id, type, val->val, cur->token->lineno)) return 0;
+		if (!pcaddsym(cur->token->val.id, type, val->val, 1, cur->token->lineno)) return 0;
 
 		/* add to the parse tree */
 		astcur = AST_initialize(idasm);
@@ -860,7 +859,7 @@ pcp_program() {
 
 	/* add to our symbol table */
 	EXPECT(idsym);
-	ADDSYM(lasttoken->val.id, programtype, lasttoken);
+	if (!pcaddsym(lasttoken->val.id, programtype, (symval)0, 0, lasttoken->lineno)) return 0;
 
 	/* add to our tree */
 	astroot = AST_initialize(programasm);

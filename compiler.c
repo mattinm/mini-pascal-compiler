@@ -97,7 +97,8 @@ main(int argc, char **argv) {
 	AST_cleanup(&astroot);
 
 	/* print our symbol table */
-	/*pcprintsymtab();*/
+	pcprintsymtab();
+	pccleanupsymtab();
 #endif /* YYCOMPILE */
 
 	return EXIT_SUCCESS;
