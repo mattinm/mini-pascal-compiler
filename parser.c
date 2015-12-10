@@ -344,27 +344,21 @@ pcp_expression(AST *ast) {
 	return 1;
 }
 
-/*int
-pcp_for() {
-	NEXTTOKEN();
-	if (token->sym != idsym) return pcp_error("Expected ID.");
+/*
+int
+pcp_for(AST *ast) {
+	AST *astfor;
 
-	NEXTTOKEN();
-	if (token->sym != assignsym) return pcp_error("Expected ':='.");
+	printf("## ENTERED pcp_for ##\n");
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	astfor = AST_initialize(forasm);
+	AST_addchild(ast, astfor);
 
-	NEXTTOKEN();
-	if (token->sym != tosym && token->sym != downtosym) return pcp_error("Expected to or downto.");
+	if (!pcp_expression(astwhile)) return 0;
 
-	NEXTTOKEN();
-	if (!pcp_expression()) return 0;
+	EXPECT(dosym);
 
-	NEXTTOKEN();
-	if (token->sym != dosym) return pcp_error("Expected do.");
-
-	NEXTTOKEN();
+	return pcp_statement_part(astwhile);
 	return pcp_statement_part();
 }*/
 
@@ -407,14 +401,14 @@ pcp_if(AST *ast) {
 }
 
 int
-pcp_write(AST *ast) {
+pcp_write(AST *ast, ASTnode nodetype) {
 	AST *astwrite;
 
 	printf("## ENTERED pcp_write ##\n");
 	
 	EXPECT(lparensym);
 
-	astwrite = AST_initialize(writeasm);
+	astwrite = AST_initialize(nodetype);
 	AST_addchild(ast, astwrite);
 	
 	if (!pcp_expression(astwrite)) return 0;
@@ -522,9 +516,9 @@ pcp_assign(AST *ast, pctoken *ltoken) {
 
 	printf("## ENTERED pcp_assign ##\n");
 
-	if (!entry || (entry->type != integertype && entry->type != realtype && entry->type != chartype && entry->type != stringtype)) {
-		return pcerror("Undefined ID or unexpected type.\n");
-	}
+	if (!entry) return pcerror("Undefined ID.\n");
+	if (entry->type != functiontype && entry->type != integertype && entry->type != realtype && entry->type != chartype && entry->type != stringtype)
+		return pcerror("Unexpected type: %d\n", entry->type);
 
 	astassign = AST_initialize(assignasm);
 	astassign->name = strdup(ltoken->val.id);
@@ -553,8 +547,10 @@ pcp_statement(AST *ast) {
 		else return pcerror("Unexpected symbol.\n");
 	} else if (pcp_accept(readsym) || pcp_accept(readlnsym)) {
 		success = pcp_read(ast);
-	} else if (pcp_accept(writesym) || pcp_accept(writelnsym)) {
-		success = pcp_write(ast);
+	} else if (pcp_accept(writesym)) { 
+		success = pcp_write(ast, writeasm);
+	} else if (pcp_accept(writelnsym)) {
+		success = pcp_write(ast, writelnasm);
 	} else if (pcp_accept(ifsym)) {
 		success = pcp_if(ast);
 	} else if (pcp_accept(whilesym)) {
@@ -645,12 +641,13 @@ int
 pcp_function_declaration(AST *ast) {
 	symtype type;
 	AST *astfunc;
+	symentry *entry;
 
 	printf("## ENTERING pcp_function_declaration ##\n");
 
 	/* enter our new scope for the function */
 	EXPECT(idsym);
-	if (!pcenterscope(lasttoken->val.id, functiontype, lasttoken->lineno)) return 0;
+	if (!(entry = pcenterscope(lasttoken->val.id, functiontype, lasttoken->lineno))) return 0;
 
 	astfunc = AST_initialize(functionasm);
 	astfunc->name = strdup(lasttoken->val.id);
@@ -665,7 +662,7 @@ pcp_function_declaration(AST *ast) {
 	if (!sym_to_type(token->sym, &type)) return 0;
 
 	/* update our return type */
-	/*entry->returntype = type;*/
+	entry->returntype = type;
 
 	NEXTTOKEN();
 	EXPECT(semicolonsym);

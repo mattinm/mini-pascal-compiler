@@ -7,6 +7,7 @@
 # include "symtab.h"
 # include "io.h"
 # include "ast.h"
+# include "icg.h"
 #endif /* YYCOMPILE */
 
 #include <stdio.h>
@@ -94,10 +95,22 @@ main(int argc, char **argv) {
 		AST_print(astroot, astfp);
 		printf("\nSaved astfp.txt\n");
 	}
-	AST_cleanup(&astroot);
+
+	/* save our output */
+	FILE *output;
+	if (!(output = fopen("output.s", "w"))) {
+		printf("\nUNABLE TO SAVE\n");
+		pccleanupsymtab();
+		return EXIT_FAILURE;
+	}
 
 	/* print our symbol table */
 	pcprintsymtab();
+
+	pcicg_start(output);
+	AST_cleanup(&astroot);
+
+	/* print our symbol table */
 	pccleanupsymtab();
 #endif /* YYCOMPILE */
 

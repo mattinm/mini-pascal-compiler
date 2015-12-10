@@ -58,6 +58,8 @@ typedef struct symentry {
 	symval		val;	/* value of the lexeme */
 	unsigned	lineno;	/* line the lexeme was declared on */
 	int 		bconst;	/* whether or not it's constant */
+	unsigned	size;	/* the size of the entry */
+	int 		offset;	/* stack offset */
 
 	struct symtab 	*tab;		/* symbol table for this entry (procedures and functions) */
 	symtype 		returntype; /* return type for functions */
@@ -123,6 +125,14 @@ Lookup a symbol from the current table.
 symentry *pclookupsym(const char *name);
 
 /*
+Lookup with a fully-calculated offset based on scope.
+
+@param name the name of the lexeme
+@retur the entry or NULL if not found
+*/
+symentry *pclookupsym_entry(const char *name, int *offset);
+
+/*
 Enters a new scope (creating a new symbol table and entry into 
 the current symbol table.
 
@@ -134,11 +144,18 @@ the current symbol table.
 symentry *pcenterscope(const char *name, symtype type, unsigned lineno);
 
 /*
+Enters the scope of the given element without creating an entry.
+*/
+int pcenterscope_nocreate(symentry *entry);
+
+/*
 Leaves the current scope, returning to the parent scope.
 
 @return 1 on success; 0 otherwise
 */
 int pcleavescope();
+
+int pcrootsize();
 
 
 #endif /* SYMTAB_H */

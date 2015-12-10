@@ -7,6 +7,8 @@
 symtab *root 	= NULL;	/* our root table (keywords only) */
 symtab *current	= NULL; /* our current table */
 
+symentry *rootentry = NULL;	/* our root entry */
+
 const char *symtypestr[numsymtypes] = {
 	/* Keywords */
 	"keyword",
@@ -34,7 +36,7 @@ Lookup a lexeme with the option of restricting to the current scope.
 @param current_scope_only whether to restrict to current scope
 @return the entry or NULL if not found
 */
-symentry *pclookupsym_internal(const char *name, int current_scope_only) {
+symentry *pclookupsym_internal(const char *name, int current_scope_only, int *offset) {
 	symentry 	*entry;
 	symtab 		*tab;
 
@@ -44,19 +46,30 @@ symentry *pclookupsym_internal(const char *name, int current_scope_only) {
 	entry = current->entries;
 	while (entry) {
 		if (strcmp(entry->name, name) == 0) {
+			if (offset) *offset = entry->offset;
 			return entry;
 		}
 
 		entry = entry->next;
 	}
 
+	/* check the see if we're referencing our own name */
+	entry = current->block;
+	if (strcmp(entry->name, name) == 0) {
+		if (offset) *offset = entry->offset;
+		return entry;
+	}
+
 	/* go up to the parent, if needed */
 	if (current_scope_only) return NULL;
+
+	if (offset) *offset = current->block->size;
 	tab = current->parent;
 	while (tab) {
 		entry = tab->entries;
 		while (entry) {
 			if (strcmp(entry->name, name) == 0) {
+				if (offset) *offset += entry->offset;
 				return entry;
 			}
 
@@ -64,6 +77,7 @@ symentry *pclookupsym_internal(const char *name, int current_scope_only) {
 		}
 
 		/* keep going up */
+		if (offset) *offset += current->block->size;
 		tab = tab->parent;
 	}
 
@@ -74,13 +88,26 @@ symentry *pclookupsym_internal(const char *name, int current_scope_only) {
 int pcintializesymtab() {
 	symval val;
 
+	/* create a main entry */
+	if (!(rootentry = malloc(sizeof(*rootentry)))) return 0;
+	rootentry->name 		= strdup("main");
+	rootentry->type 		= programtype;
+	rootentry->val 			= (symval)0;
+	rootentry->bconst 		= 1;
+	rootentry->lineno		= 0;
+	rootentry->tab 			= NULL;
+	rootentry->params		= NULL;
+	rootentry->returntype	= notype;
+	rootentry->size 		= 0;
+	rootentry->offset 		= 0;
+
 	/* create or root table and set it current */
 	if (!(root = malloc(sizeof(*root)))) return 0;
 
 	current = root;
 	current->parent		= NULL;
 	current->entries 	= NULL;
-	current->block 		= NULL;
+	current->block 		= rootentry;
 
 	val.ival = 0;
 
@@ -144,19 +171,19 @@ void pcprintsymtabnode(symtab *node, unsigned depth) {
 	while (entry) {
 		switch (entry->type) {
 			case integertype:
-				printf("%s%s (%s) : %d : %d\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.ival);
+				printf("%s%s (%s @ %d // %d) : %d : %d :\n", tabs, entry->name, symtypestr[entry->type], entry->offset, entry->size, entry->lineno, entry->val.ival);
 				break;
 			case realtype:
-				printf("%s%s (%s) : %d : %f\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.rval);
+				printf("%s%s (%s @ %d // %d) : %d : %f\n", tabs, entry->name, symtypestr[entry->type], entry->offset, entry->size, entry->lineno, entry->val.rval);
 				break;
 			case chartype:
-				printf("%s%s (%s) : %d : %c\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.cval);
+				printf("%s%s (%s @ %d // %d) : %d : %c\n", tabs, entry->name, symtypestr[entry->type], entry->offset, entry->size, entry->lineno, entry->val.cval);
 				break;
 			case stringtype:
-				printf("%s%s (%s) : %d : %s\n", tabs, entry->name, symtypestr[entry->type], entry->lineno, entry->val.str);
+				printf("%s%s (%s @ %d // %d) : %d : %s\n", tabs, entry->name, symtypestr[entry->type], entry->offset, entry->size, entry->lineno, entry->val.str);
 				break;
 			default:
-				printf("%s%s (%s) : %d : NULL\n", tabs, entry->name, symtypestr[entry->type], entry->lineno);
+				printf("%s%s (%s @ %d // %d) : %d : NULL\n", tabs, entry->name, symtypestr[entry->type], entry->offset, entry->size, entry->lineno);
 		}
 
 		/* print the symbol table for the child, if it exists */
@@ -168,7 +195,7 @@ void pcprintsymtabnode(symtab *node, unsigned depth) {
 }
 
 void pcprintsymtab() {
-	printf("\n===== SYMBOL TABLE =====\n");
+	printf("\n===== SYMBOL TABLE @ %d =====\n", root->block->size);
 	pcprintsymtabnode(root, 0);
 }
 
@@ -209,7 +236,7 @@ symentry *pcaddsym(const char *name, symtype type, symval val, int bconst, unsig
 	}
 
 	/* make sure it doesn't yet exist in this scope */
-	if (pclookupsym_internal(name, 1)) {
+	if (pclookupsym_internal(name, 1, NULL)) {
 		pcerror("{%d} ERR: %s already exists in symbol table.\n", lineno, name);
 		return NULL;
 	}
@@ -225,7 +252,40 @@ symentry *pcaddsym(const char *name, symtype type, symval val, int bconst, unsig
 	entry->params		= NULL;
 	entry->returntype 	= notype;
 
-	/* add to the tail of the entries */
+	/* stack memory information */
+	switch (type) {
+		case stringtype:
+			entry->size 	= strlen(val.str) + 1;
+
+			/* make sure we're padded to 4 */
+			if (entry->size % 4) {
+				entry->size = entry->size + (4 - (entry->size % 4));
+			}
+
+			/* update our offset */
+			entry->offset = current->block->size;
+			break;
+
+		case blocktype:
+		case functiontype:
+		case proceduretype:
+		case programtype:
+		case keywordtype:
+			/* block types have no size or offset */
+			entry->size = 0;
+			entry->offset = 0;
+			break;
+
+		default:
+			/* update our offset */
+			entry->size = 4;
+			entry->offset = current->block->size;
+	}
+
+	/* update our current stack size */
+	if (type != keywordtype) current->block->size += entry->size;
+
+	/* add to the head of the entries */
 	entry->next			= current->entries;
 	current->entries	= entry;
 	return entry;
@@ -265,9 +325,20 @@ symentry *pcaddparam(const char *name, symtype type, unsigned lineno) {
 	return entry;
 }
 
+symentry *pclookupsym_entry(const char *name, int *offset) {
+	*offset = 0;
+	return pclookupsym_internal(name, 0, offset);
+}
 
 symentry *pclookupsym(const char *name) {
-	return pclookupsym_internal(name, 0);
+	return pclookupsym_internal(name, 0, NULL);
+}
+
+int pcenterscope_nocreate(symentry *entry) {
+	if (!entry || !entry->tab) return pcerror("Unable to enter scope!\n");
+
+	current = entry->tab;
+	return 1;
 }
 
 symentry *pcenterscope(const char *name, symtype type, unsigned lineno) {
@@ -280,8 +351,8 @@ symentry *pcenterscope(const char *name, symtype type, unsigned lineno) {
 	entry->tab->parent	= current;
 	entry->tab->entries = NULL;
 	entry->tab->block = entry;
-	current = entry->tab;
 
+	if (!pcenterscope_nocreate(entry)) return 0;
 	return entry;
 }
 
@@ -292,4 +363,9 @@ int pcleavescope() {
 	/* go up to our parent */
 	current = current->parent;
 	return 1;
+}
+
+int pcrootsize() {
+	if (root) return root->block->size;
+	return 0;
 }

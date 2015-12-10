@@ -4,6 +4,63 @@
 
 AST *astroot = NULL;
 
+const char *astnodestr[numasms] = {
+	"eofasm",
+
+	/* Operators */
+	"addasm",
+	"multasm",
+
+	/* Scopes */
+	"programasm",
+	"procedureasm",
+	"functionasm",
+	"paramasm",
+	"statementasm",
+	"proccallasm",
+	"funccallasm",
+
+	/* Expressions */
+	"exprasm",
+	"simexprasm",
+	"termasm",
+	"factorasm",
+
+	/* Boolean operators */
+	"relasm",
+	"notasm",
+
+	/* Punctuation */
+	"assignasm",
+	"dotdotasm",
+
+	/* Control flow */
+	"ifasm",
+	"whileasm",
+
+	/* Variables */
+	"idasm",
+	"arrayasm",
+	"ofasm",
+	"charasm",
+	"stringasm",
+	"integerasm",
+	"realasm",
+	"varasm",
+
+	/* Constants */
+	"valasm",
+	"constasm",
+
+	/* Built-in functions */
+	"chrasm",
+	"ordasm",
+	"readasm",
+	"readlnasm",
+	"writeasm",
+	"writelnasm",
+};
+
 AST* AST_initialize(ASTnode node) {
 AST *ast;
 

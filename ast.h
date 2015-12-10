@@ -65,6 +65,8 @@ typedef enum {
 	numasms
 } ASTnode;
 
+extern const char *astnodestr[numasms];
+
 struct ASTchild;
 typedef struct AST {
 	ASTnode 			node;	/* node type */
