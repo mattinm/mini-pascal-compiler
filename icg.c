@@ -474,6 +474,9 @@ int pcicg_assign(AST *ast, int *t) {
 	if (!(entry = pclookupsym_entry(cur->ast->name, &offset)))
 		return pcerror("Unable to find variable: %s\n", cur->ast->name);
 
+	/* make sure the entry isn't constant */
+	if (entry->bconst) return pcerror("Cannot alter constant variable: %s\n", entry->name);
+
 	/* evaluate the expression */
 	cur = cur->next;
 	EXPECTICG(cur->ast, exprasm);
